@@ -1,0 +1,407 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #343a40; /* Dark gray for text */
+  background-color: #f8f9fa; /* Light gray background */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  background-color: #ffffff; /* White background for the app container */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
+
+  .App {
+    padding-bottom: 150px; /* Adjust padding for smaller audio player */
+  }
+
+  .audio-player-container {
+    width: 95%;
+    flex-direction: row; /* Keep horizontal */
+    padding: 15px; /* Increased padding for more height */
+    flex-wrap: nowrap; /* Prevent items from wrapping */
+    justify-content: space-between; /* Distribute items with space between them */
+    align-items: center; /* Vertically align items */
+  }
+
+  .audio-player-container audio {
+    flex-grow: 1; /* Allow audio player to grow and shrink */
+    flex-shrink: 1; /* Allow audio player to shrink */
+    margin-bottom: 0; /* Remove margin below audio player */
+    min-width: 120px; /* Ensure a minimum width for the audio player */
+    height: 50px; /* Increased height for the audio player */
+  }
+
+  .audio-controls {
+    flex-direction: row; /* Keep horizontal */
+    width: auto; /* Allow controls to size naturally */
+    flex-wrap: nowrap; /* Prevent buttons from wrapping */
+    justify-content: flex-end; /* Align buttons to the end */
+    gap: 5px; /* Add a small gap between buttons */
+  }
+
+  .audio-controls button {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    padding: 12px 15px; /* Increased padding for bigger buttons */
+    font-size: 1em; /* Larger font size */
+    min-width: unset; /* Remove min-width */
+  }
+
+  .play-pause-button {
+    flex-shrink: 0; /* Prevent button from shrinking */
+    padding: 12px 15px; /* Increased padding for bigger buttons */
+    font-size: 1em; /* Larger font size */
+    min-width: unset; /* Remove min-width */
+    margin-left: 10px; /* Add a small margin to separate from audio player */
+  }
+
+  .upload-area {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .file-upload-label,
+  .upload-success-message {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .App > div:first-of-type { /* This targets the flex container for contact/map details */
+    flex-direction: column;
+  }
+
+  .App > div:first-of-type > div { /* This targets the individual contact/map detail boxes */
+    width: 100% !important;
+    margin: 10px 0 !important;
+  }
+
+  .option-box {
+    padding: 8px 12px !important;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2.5em;
+  }
+
+  h2, h3 {
+    font-size: 1.2em;
+  }
+
+  button {
+    font-size: 0.9em;
+    padding: 0.5em 1em;
+  }
+
+  .audio-player-container {
+    width: 100%;
+  }
+
+  .audio-controls button {
+    min-width: unset; /* Remove min-width for very small screens */
+  }
+
+  .audio-controls .speed-toggle-button {
+    min-width: unset;
+  }
+
+  .file-upload-label,
+  .upload-success-message {
+    height: auto; /* Allow height to adjust */
+    padding: 8px 10px;
+  }
+
+  .App {
+    padding-bottom: 120px; /* Further adjust padding for very small audio player */
+  }
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  color: #0056b3; /* A slightly darker blue for main heading */
+}
+
+h2, h3 {
+  color: #007bff; /* Primary blue for subheadings */
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #007bff; /* Primary blue for buttons */
+  color: white;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
+  margin: 5px; /* Add some margin between buttons */
+  box-sizing: border-box;
+}
+button:hover {
+  border-color: #0056b3;
+  background-color: #0056b3;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+button.nav-button {
+  width: 120px; /* Fixed width for consistent size */
+  height: 40px; /* Fixed height for consistent size */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+button.previous-button {
+  background-color: #6c757d; /* Gray for previous */
+}
+
+button.previous-button:hover {
+  background-color: #5a6268;
+}
+
+button.next-button {
+  background-color: #28a745; /* Green for next */
+}
+
+button.next-button:hover {
+  background-color: #218838;
+}
+
+button.next-button.next-button-disabled {
+  background-color: #dc3545; /* Red when disabled */
+  cursor: not-allowed;
+}
+
+button.next-button.next-button-enabled {
+  background-color: #28a745; /* Green when enabled */
+}
+
+.nav-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* Space between buttons */
+  margin-top: 20px; /* Add some space above the buttons */
+}
+
+/* Specific style for the Reset App button */
+button.reset-button {
+  background-color: #dc3545; /* Red for destructive action */
+}
+button.reset-button:hover {
+  background-color: #c82333;
+}
+
+/* Style for the custom file upload button */
+.upload-area {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center horizontally */
+  gap: 20px; /* Space between button and message */
+  margin-bottom: 20px;
+}
+
+.file-upload-container {
+  display: inline-block;
+}
+
+.file-input {
+  display: none; /* Hide the actual file input */
+}
+
+.file-upload-label {
+  background-color: #007bff; /* Primary blue */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  display: flex; /* Use flex to center text vertically */
+  align-items: center;
+  height: 40px; /* Fixed height */
+  width: 140px; /* Fixed width for consistency */
+  justify-content: center; /* Center text horizontally */
+  box-sizing: border-box;
+}
+
+.file-upload-label:hover {
+  background-color: #0056b3;
+}
+
+.upload-success-message {
+  color: #28a745; /* Green color for success message */
+  font-weight: bold;
+  padding: 10px 15px;
+  border: 1px solid #28a745;
+  border-radius: 8px;
+  background-color: #e6ffe6; /* Light green background */
+  display: flex;
+  align-items: center;
+  white-space: nowrap; /* Prevent text wrapping */
+  height: 40px; /* Fixed height */
+  box-sizing: border-box;
+}
+
+.contact-map-container {
+  display: flex;
+  gap: 20px; /* Space between contact details and map */
+  margin-bottom: 20px; /* Space below the container */
+}
+
+@media (max-width: 480px) {
+  .contact-map-container {
+    flex-direction: column; /* Stack contact details and map vertically on small screens */
+    align-items: center; /* Center items horizontally */
+  }
+  .audio-player-container{
+    height: 8%; width: 100%!important; /* Full width on small screens */
+  }
+}
+
+input[type="text"] {
+  padding: 0.6em 1.2em;
+  border: 1px solid #ced4da; /* Light gray border */
+  border-radius: 4px;
+  margin-bottom: 10px;
+  width: calc(100% - 2.4em - 2px); /* Adjust width for padding and border */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: #007bff; /* Highlight with primary blue on focus */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #495057; /* Slightly darker gray for labels */
+}
+
+.question-label {
+  text-align: left;
+}
+
+.audio-player-container {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  background-color: rgb(59,59,59);
+  padding: 10px;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Distribute items with space between them */
+  gap: 10px;
+}
+
+.play-pause-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 10px;
+  cursor: pointer;
+  min-width: 95px; /* Default min-width for all audio control buttons */
+  margin-left: auto; /* Push the button to the right */
+}
+
+.play-pause-button:hover {
+  background-color: #0056b3;
+}
+
+.play-pause-button:active {
+  background-color: #003f80; /* A darker shade for active state */
+}
+
+audio.audio-player {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: rgb(59,59,59); /* Dark background for the player */
+  padding: 10px;
+}
+
+.audio-controls button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  min-width: 95px; /* Default min-width for all audio control buttons */
+}
+
+.audio-controls .speed-toggle-button {
+  min-width: 200px;
+}
+
+.audio-controls button:hover {
+  background-color: #0056b3;
+}
+
+.audio-controls button:active {
+  background-color: #003f80; /* A darker shade for active state */
+}
+
+.audio-controls button.active-speed-button {
+  background-color: #28a745; /* Green for active speed (1.25x) */
+}
+
+.audio-controls button.speed-1-5x-active {
+  background-color: #dc3545; /* Red for 1.5x speed */
+}
+
+.App {
+  padding-bottom: 200px; /* Further increased padding to accommodate fixed audio player */
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #dee2e6; /* Light gray separator */
+  margin: 40px 0;
+}
+
+footer {
+  margin-top: 50px;
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #dee2e6;
+}
