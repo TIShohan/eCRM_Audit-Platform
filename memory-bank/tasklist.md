@@ -548,9 +548,9 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 7.1: Create Reports Page
 **Goal**: Export audit results
-- [ ] Create `src/pages/admin/Reports.jsx`
-- [ ] Date range picker (start date, end date)
-- [ ] "Export CSV" button
+- [x] Create `src/pages/admin/Reports.jsx`
+- [x] Date range picker (start date, end date)
+- [x] "Export CSV" button
 
 **Files**: `src/pages/admin/Reports.jsx`
 
@@ -558,10 +558,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 7.2: Implement Export Query
 **Goal**: Fetch audit data with responses
-- [ ] In `Reports.jsx`, create query function
-- [ ] Join tables: `audit_data`, `audit_responses`, `questions`, `answer_options`, `user_profiles`
-- [ ] Filter by date range
-- [ ] Return combined dataset
+- [x] In `Reports.jsx`, create query function
+- [x] Join tables: `audit_data`, `audit_responses`, `questions`, `answer_options`, `user_profiles`
+- [x] Filter by date range
+- [x] Return combined dataset
 
 **Files**: `src/pages/admin/Reports.jsx`
 
@@ -569,10 +569,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 7.3: Generate CSV from Query Results
 **Goal**: Convert data to CSV format
-- [ ] Use PapaParse to generate CSV
-- [ ] Columns: all audit_data fields + question texts + answers + auditor email
-- [ ] UTF-8 BOM encoding
-- [ ] Trigger download
+- [x] Use PapaParse to generate CSV
+- [x] Columns: all audit_data fields + question texts + answers + auditor email
+- [x] UTF-8 BOM encoding
+- [x] Trigger download
 
 **Files**: `src/pages/admin/Reports.jsx`
 

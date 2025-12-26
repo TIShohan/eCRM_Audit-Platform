@@ -8,6 +8,7 @@ import UserManagement from './pages/admin/UserManagement'
 import DataManagement from './pages/admin/DataManagement'
 import DataList from './pages/admin/DataList'
 import QuestionManagement from './pages/admin/QuestionManagement'
+import Reports from './pages/admin/Reports'
 import AuditorDashboard from './pages/auditor/AuditorDashboard'
 
 function App() {
@@ -31,7 +32,7 @@ function App() {
             <Route path="data" element={<DataList />} />
             <Route path="data/upload" element={<DataManagement />} />
             <Route path="questions" element={<QuestionManagement />} />
-            <Route path="reports" element={<div>Reports - Coming soon</div>} />
+            <Route path="reports" element={<Reports />} />
           </Route>
 
           {/* Auditor routes */}
