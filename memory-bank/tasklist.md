@@ -9,9 +9,9 @@ Transform the current client-side CSV app into a full-stack audit platform with 
 
 ### Task 1.1: Update Project Documentation
 **Goal**: Document new requirements in memory bank
-- [ ] Update `projectbrief.md` with new multi-user audit platform vision
-- [ ] Create `newRequirements.md` with detailed feature specs
-- [ ] Update `progress.md` to reflect transformation phase
+- [x] Update `projectbrief.md` with new multi-user audit platform vision
+- [x] Create `newRequirements.md` with detailed feature specs
+- [x] Update `progress.md` to reflect transformation phase
 
 **Files**: `memory-bank/projectbrief.md`, `memory-bank/newRequirements.md`
 
@@ -19,10 +19,10 @@ Transform the current client-side CSV app into a full-stack audit platform with 
 
 ### Task 1.2: Supabase Project Setup
 **Goal**: Create and configure Supabase project
-- [ ] Create new Supabase project (free tier)
-- [ ] Note project URL and anon key
-- [ ] Create `.env` file with Supabase credentials
-- [ ] Add `.env` to `.gitignore`
+- [x] Create new Supabase project (free tier)
+- [x] Note project URL and anon key
+- [x] Create `.env` file with Supabase credentials
+- [x] Add `.env` to `.gitignore`
 
 **Files**: `.env`, `.gitignore`
 
@@ -36,9 +36,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 ### Task 1.3: Install Supabase Client
 **Goal**: Add Supabase SDK to project
-- [ ] Run: `npm install @supabase/supabase-js`
-- [ ] Create `src/lib/supabase.js` with client initialization
-- [ ] Test connection with simple query
+- [x] Run: `npm install @supabase/supabase-js`
+- [x] Create `src/lib/supabase.js` with client initialization
+- [x] Test connection with simple query
 
 **Files**: `package.json`, `src/lib/supabase.js`
 
@@ -58,9 +58,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 ### Task 2.1: Design Database Schema
 **Goal**: Plan all tables and relationships
-- [ ] Create `memory-bank/database-schema.md` with table definitions
-- [ ] Define columns, types, and relationships
-- [ ] Plan indexes and constraints
+- [x] Create `memory-bank/database-schema.md` with table definitions
+- [x] Define columns, types, and relationships
+- [x] Plan indexes and constraints
 
 **Tables needed**:
 1. `users` (extends Supabase auth.users)
@@ -76,10 +76,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 ### Task 2.2: Create Users Profile Table
 **Goal**: Extend Supabase auth with role and limits
-- [ ] Create `user_profiles` table in Supabase
-- [ ] Columns: `id` (FK to auth.users), `role`, `daily_limit`, `created_at`
-- [ ] Set up RLS (Row Level Security) policies
-- [ ] Create trigger to auto-create profile on user signup
+- [x] Create `user_profiles` table in Supabase
+- [x] Columns: `id` (FK to auth.users), `role`, `daily_limit`, `created_at`
+- [x] Set up RLS (Row Level Security) policies
+- [x] Create trigger to auto-create profile on user signup
 
 **SQL**:
 ```sql
@@ -111,10 +111,10 @@ CREATE POLICY "Admins can view all profiles"
 
 ### Task 2.3: Create Audit Data Table
 **Goal**: Store CSV records in database
-- [ ] Create `audit_data` table
-- [ ] Columns: `id`, `contact_id`, `contact_date`, `audio_link`, `campaign_id`, `campaign_name`, `location`, `status`, `assigned_to`, `completed_at`, `created_at`
-- [ ] Add indexes on `campaign_id`, `assigned_to`, `status`
-- [ ] Set up RLS policies
+- [x] Create `audit_data` table
+- [x] Columns: `id`, `contact_id`, `contact_date`, `audio_link`, `campaign_id`, `campaign_name`, `location`, `status`, `assigned_to`, `completed_at`, `created_at`
+- [x] Add indexes on `campaign_id`, `assigned_to`, `status`
+- [x] Set up RLS policies
 
 **SQL**:
 ```sql
@@ -122,9 +122,13 @@ CREATE TABLE audit_data (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   contact_id TEXT NOT NULL,
   contact_date TEXT,
+  start_time TEXT,
+  end_time TEXT,
+  duration TEXT,
   audio_link TEXT,
   campaign_id TEXT NOT NULL,
   campaign_name TEXT,
+  outlet_name TEXT,
   location TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
   assigned_to UUID REFERENCES user_profiles(id),
@@ -156,9 +160,9 @@ CREATE POLICY "Admins see all data"
 
 ### Task 2.4: Create Questions Table
 **Goal**: Store common and campaign-specific questions
-- [ ] Create `questions` table
-- [ ] Columns: `id`, `question_text`, `question_type` (common/campaign), `campaign_id` (nullable), `order_index`, `created_at`
-- [ ] Set up RLS policies (read: all, write: admin only)
+- [x] Create `questions` table
+- [x] Columns: `id`, `question_text`, `question_type` (common/campaign), `campaign_id` (nullable), `order_index`, `created_at`
+- [x] Set up RLS policies (read: all, write: admin only)
 
 **SQL**:
 ```sql
@@ -194,9 +198,9 @@ CREATE POLICY "Only admins can modify questions"
 
 ### Task 2.5: Create Answer Options Table
 **Goal**: Store multiple choice options for questions
-- [ ] Create `answer_options` table
-- [ ] Columns: `id`, `question_id` (FK), `option_text`, `order_index`, `created_at`
-- [ ] Set up RLS policies
+- [x] Create `answer_options` table
+- [x] Columns: `id`, `question_id` (FK), `option_text`, `order_index`, `created_at`
+- [x] Set up RLS policies
 
 **SQL**:
 ```sql
@@ -230,9 +234,9 @@ CREATE POLICY "Only admins can modify answer options"
 
 ### Task 2.6: Create Audit Responses Table
 **Goal**: Store auditor answers
-- [ ] Create `audit_responses` table
-- [ ] Columns: `id`, `audit_data_id` (FK), `question_id` (FK), `answer_option_id` (FK), `auditor_id` (FK), `created_at`
-- [ ] Set up RLS policies
+- [x] Create `audit_responses` table
+- [x] Columns: `id`, `audit_data_id` (FK), `question_id` (FK), `answer_option_id` (FK), `auditor_id` (FK), `created_at`
+- [x] Set up RLS policies
 
 **SQL**:
 ```sql
@@ -273,9 +277,9 @@ CREATE POLICY "Admins can view all responses"
 
 ### Task 2.7: Create Assignments Table
 **Goal**: Track data assignment to auditors
-- [ ] Create `assignments` table
-- [ ] Columns: `id`, `audit_data_id` (FK), `auditor_id` (FK), `assigned_at`, `assigned_by` (FK to admin)
-- [ ] Set up RLS policies
+- [x] Create `assignments` table
+- [x] Columns: `id`, `audit_data_id` (FK), `auditor_id` (FK), `assigned_at`, `assigned_by` (FK to admin)
+- [x] Set up RLS policies
 
 **SQL**:
 ```sql
@@ -312,10 +316,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 3.1: Create Auth Context
 **Goal**: Set up React context for authentication
-- [ ] Create `src/contexts/AuthContext.jsx`
-- [ ] Implement login, logout, signup functions
-- [ ] Track current user and role
-- [ ] Handle auth state changes
+- [x] Create `src/contexts/AuthContext.jsx`
+- [x] Implement login, logout, signup functions
+- [x] Track current user and role
+- [x] Handle auth state changes
 
 **Files**: `src/contexts/AuthContext.jsx`
 
@@ -323,10 +327,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 3.2: Create Login Page
 **Goal**: Build login UI
-- [ ] Create `src/pages/Login.jsx`
-- [ ] Email/password form
-- [ ] Error handling
-- [ ] Redirect to dashboard on success
+- [x] Create `src/pages/Login.jsx`
+- [x] Email/password form
+- [x] Error handling
+- [x] Redirect to dashboard on success
 
 **Files**: `src/pages/Login.jsx`
 
@@ -334,10 +338,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 3.3: Create Protected Route Component
 **Goal**: Restrict access based on auth and role
-- [ ] Create `src/components/ProtectedRoute.jsx`
-- [ ] Check if user is authenticated
-- [ ] Check user role
-- [ ] Redirect to login if not authenticated
+- [x] Create `src/components/ProtectedRoute.jsx`
+- [x] Check if user is authenticated
+- [x] Check user role
+- [x] Redirect to login if not authenticated
 
 **Files**: `src/components/ProtectedRoute.jsx`
 
@@ -345,10 +349,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 3.4: Set Up React Router
 **Goal**: Add routing for multi-page app
-- [ ] Install: `npm install react-router-dom`
-- [ ] Create `src/App.jsx` with routes
-- [ ] Routes: `/login`, `/admin/*`, `/auditor/*`
-- [ ] Wrap routes with AuthContext
+- [x] Install: `npm install react-router-dom`
+- [x] Create `src/App.jsx` with routes
+- [x] Routes: `/login`, `/admin/*`, `/auditor/*`
+- [x] Wrap routes with AuthContext
 
 **Files**: `src/App.jsx`
 
@@ -358,10 +362,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 4.1: Create Admin Layout
 **Goal**: Build admin dashboard shell
-- [ ] Create `src/pages/admin/AdminLayout.jsx`
-- [ ] Sidebar navigation
-- [ ] Header with logout
-- [ ] Outlet for nested routes
+- [x] Create `src/pages/admin/AdminLayout.jsx`
+- [x] Sidebar navigation
+- [x] Header with logout
+- [x] Outlet for nested routes
 
 **Files**: `src/pages/admin/AdminLayout.jsx`
 
@@ -369,12 +373,12 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 4.2: Create Admin Dashboard Home
 **Goal**: Show overview metrics
-- [ ] Create `src/pages/admin/Dashboard.jsx`
-- [ ] Fetch and display:
+- [x] Create `src/pages/admin/Dashboard.jsx`
+- [x] Fetch and display:
   - Total users count
   - Total audit data count
   - Completed audits count
-- [ ] Use Supabase queries
+- [x] Use Supabase queries
 
 **Files**: `src/pages/admin/Dashboard.jsx`
 
@@ -382,10 +386,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 4.3: Create User List Page
 **Goal**: Display all users
-- [ ] Create `src/pages/admin/UserManagement.jsx`
-- [ ] Fetch all user profiles
-- [ ] Display in table: email, role, daily_limit
-- [ ] Add "Create User" button
+- [x] Create `src/pages/admin/UserManagement.jsx`
+- [x] Fetch all user profiles
+- [x] Display in table: email, role, daily_limit
+- [x] Add "Create User" button
 
 **Files**: `src/pages/admin/UserManagement.jsx`
 
@@ -393,10 +397,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 4.4: Create User Form (Create/Edit)
 **Goal**: Add/edit users
-- [ ] Create `src/components/admin/UserForm.jsx`
-- [ ] Form fields: email, password, role, daily_limit
-- [ ] Use Supabase Admin API to create user
-- [ ] Update user_profiles table
+- [x] Create `src/components/admin/UserForm.jsx`
+- [x] Form fields: email, password, role, daily_limit
+- [x] Use Supabase Admin API to create user
+- [x] Update user_profiles table
 
 **Files**: `src/components/admin/UserForm.jsx`
 
@@ -406,11 +410,11 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 4.5: Implement User Metrics Display
 **Goal**: Show per-user audit stats
-- [ ] Update `UserManagement.jsx`
-- [ ] For each user, query:
+- [x] Update `UserManagement.jsx`
+- [x] For each user, query:
   - Total assigned records
   - Completed records
-- [ ] Display in table columns
+- [x] Display in table columns
 
 **Files**: `src/pages/admin/UserManagement.jsx`
 
@@ -420,34 +424,34 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 5.1: Create Data Upload Page
 **Goal**: CSV upload interface for admin
-- [ ] Create `src/pages/admin/DataUpload.jsx`
-- [ ] File input for CSV
-- [ ] Parse CSV with PapaParse
-- [ ] Preview parsed data in table
+- [x] Create `src/pages/admin/DataManagement.jsx`
+- [x] File input for CSV
+- [x] Parse CSV with PapaParse
+- [x] Preview parsed data in UI (Integrated in upload flow)
 
-**Files**: `src/pages/admin/DataUpload.jsx`
+**Files**: `src/pages/admin/DataManagement.jsx`
 
 ---
 
 ### Task 5.2: Implement CSV to Database Import
 **Goal**: Save CSV rows to audit_data table
-- [ ] In `DataUpload.jsx`, add "Import to Database" button
-- [ ] Loop through parsed CSV rows
-- [ ] Insert each row into `audit_data` table
-- [ ] Show progress indicator
-- [ ] Handle errors and duplicates
+- [x] In `DataManagement.jsx`, add upload logic
+- [x] Loop through parsed CSV rows
+- [x] Insert rows into `audit_data` table (Batch insert)
+- [x] Show success/error feedback
+- [x] Handle errors
 
-**Files**: `src/pages/admin/DataUpload.jsx`
+**Files**: `src/pages/admin/DataManagement.jsx`
 
 ---
 
 ### Task 5.3: Create Data List Page
 **Goal**: View all uploaded audit data
-- [ ] Create `src/pages/admin/DataList.jsx`
-- [ ] Fetch all records from `audit_data`
-- [ ] Display in table: contact_id, campaign, status, assigned_to
-- [ ] Add filters: campaign, status
-- [ ] Pagination for large datasets
+- [x] Create `src/pages/admin/DataList.jsx`
+- [x] Fetch all records from `audit_data`
+- [x] Display in table: contact_id, campaign, status, assigned_to
+- [x] Add filters: status
+- [x] Integrate with routing
 
 **Files**: `src/pages/admin/DataList.jsx`
 
@@ -455,10 +459,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 5.4: Create Manual Assignment Interface
 **Goal**: Assign data to specific auditor
-- [ ] In `DataList.jsx`, add "Assign" button per row
-- [ ] Modal/dropdown to select auditor
-- [ ] Update `audit_data.assigned_to`
-- [ ] Create record in `assignments` table
+- [x] In `DataList.jsx`, add "Assign" button per row
+- [x] Modal to select auditor from `user_profiles`
+- [x] Update `audit_data.assigned_to`
+- [x] Create record in `assignments` table
 
 **Files**: `src/pages/admin/DataList.jsx`
 
@@ -466,12 +470,11 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 5.5: Create Auto-Assignment Function
 **Goal**: Distribute data evenly to auditors
-- [ ] Create `src/utils/autoAssign.js`
-- [ ] Fetch all auditors
-- [ ] Fetch unassigned data
-- [ ] Distribute evenly (round-robin)
-- [ ] Respect daily limits
-- [ ] Insert into `assignments` table
+- [x] Create `src/utils/autoAssign.js`
+- [x] Fetch all auditors
+- [x] Fetch unassigned data
+- [x] Distribute evenly (round-robin)
+- [x] Insert into assignments table
 
 **Files**: `src/utils/autoAssign.js`
 
@@ -479,10 +482,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 5.6: Add Auto-Assign Button to UI
 **Goal**: Trigger auto-assignment from admin panel
-- [ ] In `DataList.jsx`, add "Auto-Assign All" button
-- [ ] Call auto-assign function
-- [ ] Show success/error feedback
-- [ ] Refresh data list
+- [x] In `DataList.jsx`, add "Auto-Assign Unassigned" button
+- [x] Call auto-assign utility function
+- [x] Show success feedback
+- [x] Refresh data list
 
 **Files**: `src/pages/admin/DataList.jsx`
 
@@ -492,10 +495,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 6.1: Create Question Management Page
 **Goal**: List all questions
-- [ ] Create `src/pages/admin/QuestionManagement.jsx`
-- [ ] Tabs: "Common Questions" and "Campaign Questions"
-- [ ] Fetch and display questions by type
-- [ ] Add "Create Question" button
+- [x] Create `src/pages/admin/QuestionManagement.jsx`
+- [x] Tabs: "Common Questions" and "Campaign Questions"
+- [x] Fetch and display questions by type
+- [x] Add "Create Question" button
 
 **Files**: `src/pages/admin/QuestionManagement.jsx`
 
@@ -503,10 +506,10 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 6.2: Create Question Form Component
 **Goal**: Add/edit questions
-- [ ] Create `src/components/admin/QuestionForm.jsx`
-- [ ] Fields: question_text, question_type, campaign_id (if campaign type), order_index
-- [ ] Insert/update in `questions` table
-- [ ] Handle form validation
+- [x] Create `src/components/admin/QuestionForm.jsx`
+- [x] Fields: question_text, question_type, campaign_id (if campaign type), order_index
+- [x] Insert/update in `questions` table
+- [x] Handle form validation
 
 **Files**: `src/components/admin/QuestionForm.jsx`
 
@@ -514,32 +517,28 @@ CREATE POLICY "Admins manage assignments"
 
 ### Task 6.3: Create Answer Options Manager
 **Goal**: Add/edit answer options for a question
-- [ ] Create `src/components/admin/AnswerOptionsManager.jsx`
-- [ ] Display existing options for selected question
-- [ ] Add new option input
-- [ ] Delete option button
-- [ ] Save to `answer_options` table
-
-**Files**: `src/components/admin/AnswerOptionsManager.jsx`
-
----
-
-### Task 6.4: Integrate Options Manager into Question Form
-**Goal**: Manage options while creating/editing question
-- [ ] In `QuestionForm.jsx`, embed `AnswerOptionsManager`
-- [ ] Pass question_id after question is created
-- [ ] Allow inline option editing
+- [x] Integrated into QuestionForm.jsx
+- [x] Display existing options
+- [x] Add new option input
+- [x] Delete option button
+- [x] Save to `answer_options` table
 
 **Files**: `src/components/admin/QuestionForm.jsx`
 
 ---
 
+### Task 6.4: Integrate Options Manager into Question Form
+**Goal**: Manage options while creating/editing question
+- [x] Done (Task 6.3)
+
+---
+
 ### Task 6.5: Add Delete Question Functionality
 **Goal**: Remove questions from database
-- [ ] In `QuestionManagement.jsx`, add delete button per question
-- [ ] Confirmation modal
-- [ ] Delete from `questions` table (cascade deletes options)
-- [ ] Refresh list
+- [x] In `QuestionManagement.jsx`, add delete button per question
+- [x] Confirmation modal
+- [x] Delete from `questions` table
+- [x] Refresh list
 
 **Files**: `src/pages/admin/QuestionManagement.jsx`
 

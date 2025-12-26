@@ -5,6 +5,10 @@ import Login from './pages/Login'
 import AdminLayout from './pages/admin/AdminLayout'
 import Dashboard from './pages/admin/Dashboard'
 import UserManagement from './pages/admin/UserManagement'
+import DataManagement from './pages/admin/DataManagement'
+import DataList from './pages/admin/DataList'
+import QuestionManagement from './pages/admin/QuestionManagement'
+import AuditorDashboard from './pages/auditor/AuditorDashboard'
 
 function App() {
   return (
@@ -24,17 +28,18 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="users" element={<UserManagement />} />
-            <Route path="data" element={<div>Data Management - Coming soon</div>} />
-            <Route path="questions" element={<div>Questions - Coming soon</div>} />
+            <Route path="data" element={<DataList />} />
+            <Route path="data/upload" element={<DataManagement />} />
+            <Route path="questions" element={<QuestionManagement />} />
             <Route path="reports" element={<div>Reports - Coming soon</div>} />
           </Route>
 
-          {/* Auditor routes - placeholder for now */}
+          {/* Auditor routes */}
           <Route
             path="/auditor"
             element={
               <ProtectedRoute>
-                <AuditorPlaceholder />
+                <AuditorDashboard />
               </ProtectedRoute>
             }
           />
@@ -47,16 +52,7 @@ function App() {
   )
 }
 
-function AuditorPlaceholder() {
-  const { signOut } = useAuth()
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>Auditor Dashboard</h1>
-      <p>Coming soon...</p>
-      <button onClick={() => signOut()}>Logout</button>
-    </div>
-  )
-}
+
 
 function RootRedirect() {
   const { user, profile, loading } = useAuth()

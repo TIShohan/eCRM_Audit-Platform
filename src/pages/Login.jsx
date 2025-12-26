@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -7,8 +7,18 @@ export default function Login() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-    const { signIn } = useAuth()
+    const { signIn, user, profile } = useAuth()
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if (user && profile) {
+            if (profile.role === 'admin') {
+                navigate('/admin')
+            } else {
+                navigate('/auditor')
+            }
+        }
+    }, [user, profile, navigate])
 
     const handleSubmit = async (e) => {
         e.preventDefault()

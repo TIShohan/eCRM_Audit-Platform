@@ -15,18 +15,37 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
+            // Fetch profiles
+            const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
-                .select(`
-          id,
-          role,
-          daily_limit,
-          created_at
-        `)
+                .select('id, role, daily_limit, created_at')
                 .order('created_at', { ascending: false })
 
-            if (error) throw error
-            setUsers(data || [])
+            if (profileError) throw profileError
+
+            // Fetch metrics for each auditor
+            const usersWithMetrics = await Promise.all(profiles.map(async (profile) => {
+                if (profile.role === 'admin') return { ...profile, assigned: '-', completed: '-' }
+
+                const { count: assignedCount } = await supabase
+                    .from('audit_data')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('assigned_to', profile.id)
+
+                const { count: completedCount } = await supabase
+                    .from('audit_data')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('assigned_to', profile.id)
+                    .eq('status', 'completed')
+
+                return {
+                    ...profile,
+                    assigned: assignedCount || 0,
+                    completed: completedCount || 0
+                }
+            }))
+
+            setUsers(usersWithMetrics)
         } catch (error) {
             console.error('Error fetching users:', error)
         } finally {
@@ -90,7 +109,9 @@ export default function UserManagement() {
                         <tr style={{ background: '#f7fafc', borderBottom: '1px solid #edf2f7' }}>
                             <th style={thStyle}>User ID</th>
                             <th style={thStyle}>Role</th>
-                            <th style={thStyle}>Daily Limit</th>
+                            <th style={thStyle}>Limit</th>
+                            <th style={thStyle}>Assigned</th>
+                            <th style={thStyle}>Completed</th>
                             <th style={thStyle}>Created At</th>
                             <th style={thStyle}>Actions</th>
                         </tr>
@@ -98,11 +119,11 @@ export default function UserManagement() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="5" style={{ padding: '20px', textAlign: 'center' }}>Loading users...</td>
+                                <td colSpan="7" style={{ padding: '20px', textAlign: 'center' }}>Loading users...</td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan="5" style={{ padding: '20px', textAlign: 'center' }}>No users found.</td>
+                                <td colSpan="7" style={{ padding: '20px', textAlign: 'center' }}>No users found.</td>
                             </tr>
                         ) : (
                             users.map((user) => (
@@ -122,6 +143,8 @@ export default function UserManagement() {
                                         </span>
                                     </td>
                                     <td style={tdStyle}>{user.daily_limit}</td>
+                                    <td style={tdStyle}>{user.assigned}</td>
+                                    <td style={tdStyle}>{user.completed}</td>
                                     <td style={tdStyle}>{new Date(user.created_at).toLocaleDateString()}</td>
                                     <td style={tdStyle}>
                                         <button
