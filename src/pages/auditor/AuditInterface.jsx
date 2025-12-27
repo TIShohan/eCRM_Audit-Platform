@@ -79,10 +79,11 @@ export default function AuditInterface() {
 
         try {
             setSubmitting(true)
+            const currentRecordId = record.id // Guard ID
 
-            // 1. Insert responses
+            // 1. Insert/Upsert responses
             const responseEntries = Object.entries(answers).map(([qId, oId]) => ({
-                audit_data_id: record.id,
+                audit_data_id: currentRecordId,
                 question_id: qId,
                 answer_option_id: oId,
                 auditor_id: user.id
@@ -90,23 +91,29 @@ export default function AuditInterface() {
 
             const { error: respError } = await supabase
                 .from('audit_responses')
-                .insert(responseEntries)
+                .upsert(responseEntries, { onConflict: 'audit_data_id,question_id' })
 
             if (respError) throw respError
 
-            // 2. Update record status
+            // 2. Update record status to 'completed'
             const { error: updateError } = await supabase
                 .from('audit_data')
                 .update({
                     status: 'completed',
                     completed_at: new Date().toISOString()
                 })
-                .eq('id', record.id)
+                .eq('id', currentRecordId)
 
             if (updateError) throw updateError
 
-            // 3. Load next
-            loadNextAudit()
+            // 3. Clear current record from state to force UI refresh
+            setRecord(null)
+            setAnswers({})
+            setIsPlaying(false)
+            if (audioRef.current) audioRef.current.pause()
+
+            // 4. Fetch the next pending record
+            await loadNextAudit()
 
         } catch (err) {
             console.error('Submit error:', err)

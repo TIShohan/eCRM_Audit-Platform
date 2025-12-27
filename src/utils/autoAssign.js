@@ -9,7 +9,7 @@ export async function autoAssignRecords() {
         // 1. Fetch all auditors
         const { data: auditors, error: audError } = await supabase
             .from('user_profiles')
-            .select('id, email, daily_limit')
+            .select('id, daily_limit')
             .eq('role', 'auditor')
 
         if (audError) throw audError
@@ -33,18 +33,18 @@ export async function autoAssignRecords() {
         let assignedCount = 0
         let auditorIndex = 0
 
-        const updates = []
+        // Use a map to group record IDs by auditor for efficient batch updates
+        const assignmentsByAuditor = {} // { auditorId: [id1, id2, ...] }
         const assignmentEntries = []
 
         for (const record of unassigned) {
             const auditor = auditors[auditorIndex]
 
-            // Assign the record
-            updates.push({
-                id: record.id,
-                assigned_to: auditor.id,
-                status: 'pending'
-            })
+            if (!assignmentsByAuditor[auditor.id]) {
+                assignmentsByAuditor[auditor.id] = []
+            }
+
+            assignmentsByAuditor[auditor.id].push(record.id)
 
             assignmentEntries.push({
                 audit_data_id: record.id,
@@ -53,19 +53,24 @@ export async function autoAssignRecords() {
             })
 
             assignedCount++
-
-            // Round robin to next auditor
             auditorIndex = (auditorIndex + 1) % auditors.length
         }
 
-        // 4. Batch Update audit_data (Supabase upsert handles this if ID is provided)
-        const { error: batchUpdateError } = await supabase
-            .from('audit_data')
-            .upsert(updates)
+        // 4. Batch Update audit_data grouped by auditor
+        // Using .update().in() is safer than upsert as it doesn't require all NOT NULL columns
+        for (const [auditorId, recordIds] of Object.entries(assignmentsByAuditor)) {
+            const { error: updateError } = await supabase
+                .from('audit_data')
+                .update({
+                    assigned_to: auditorId,
+                    status: 'pending'
+                })
+                .in('id', recordIds)
 
-        if (batchUpdateError) throw batchUpdateError
+            if (updateError) throw updateError
+        }
 
-        // 5. Batch Insert into assignments
+        // 5. Batch Insert into assignments tracking table
         const { error: batchAssignError } = await supabase
             .from('assignments')
             .insert(assignmentEntries)

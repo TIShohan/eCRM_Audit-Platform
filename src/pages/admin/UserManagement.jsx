@@ -18,7 +18,7 @@ export default function UserManagement() {
             // Fetch profiles
             const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
-                .select('id, role, daily_limit, created_at')
+                .select('id, role, daily_limit, created_at') // Temporarily removed email selection to prevent crash until SQL is run
                 .order('created_at', { ascending: false })
 
             if (profileError) throw profileError

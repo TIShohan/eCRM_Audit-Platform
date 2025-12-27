@@ -84,10 +84,10 @@ export const AuthProvider = ({ children }) => {
             if (authError) throw authError
 
             // Profile will be auto-created by trigger, but we can update role/limit if needed
-            if (authData.user && (role !== 'auditor' || dailyLimit !== 50)) {
+            if (authData.user) {
                 const { error: profileError } = await supabase
                     .from('user_profiles')
-                    .update({ role, daily_limit: dailyLimit })
+                    .update({ role, daily_limit: dailyLimit, email })
                     .eq('id', authData.user.id)
 
                 if (profileError) throw profileError

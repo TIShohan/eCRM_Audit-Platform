@@ -12,6 +12,7 @@ Extends Supabase `auth.users` with role and daily limit.
 
 **Columns:**
 - `id` (UUID, PK, FK → auth.users.id)
+- `email` (TEXT)
 - `role` (TEXT, NOT NULL, CHECK: 'admin' | 'auditor', DEFAULT: 'auditor')
 - `daily_limit` (INTEGER, DEFAULT: 50)
 - `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
