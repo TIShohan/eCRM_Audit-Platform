@@ -25,7 +25,7 @@ export default function Reports() {
                 .select(`
           *,
           auditor:user_profiles!audit_data_assigned_to_fkey(id),
-          responses:audit_responses(
+          responses:audit_responses!audit_responses_audit_data_id_fkey(
             question_id,
             answer_option_id,
             question:questions(question_text),

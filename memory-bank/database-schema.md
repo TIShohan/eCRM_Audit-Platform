@@ -24,17 +24,16 @@ Stores full CSV records for parity between upload and export.
 
 **Columns:**
 - `id` (UUID, PK, DEFAULT: gen_random_uuid())
--- **Source Data (From CSV)**
 - `assigned_region` (TEXT)
 - `assigned_area` (TEXT)
 - `assigned_territory` (TEXT)
 - `assigned_house` (TEXT)
 - `assigned_point` (TEXT)
-- `auditee_id` (TEXT) -- 'User_ID' in CSV
-- `auditee_name` (TEXT) -- 'User_Name' in CSV
+- `auditee_id` (TEXT)
+- `auditee_name` (TEXT)
 - `route` (TEXT)
 - `cluster` (TEXT)
-- `outlet_name` (TEXT) -- 'outlet' in CSV
+- `outlet_name` (TEXT)
 - `contact_id` (TEXT, NOT NULL)
 - `contact_date` (TEXT)
 - `location` (TEXT) -- "lat,lng" format
@@ -44,7 +43,6 @@ Stores full CSV records for parity between upload and export.
 - `duration` (TEXT)
 - `campaign_id` (TEXT, NOT NULL)
 - `campaign_name` (TEXT)
--- **System Metadata**
 - `status` (TEXT, CHECK: 'pending' | 'in_progress' | 'completed', DEFAULT: 'pending')
 - `assigned_to` (UUID, FK → user_profiles.id, NULLABLE)
 - `completed_at` (TIMESTAMP WITH TIME ZONE, NULLABLE)
@@ -77,7 +75,7 @@ Multiple choice options for questions.
 ---
 
 ### 5. audit_responses
-Stores auditor answers.
+Stores auditor answers for specific record-question pairs.
 
 **Columns:**
 - `id` (UUID, PK, DEFAULT: gen_random_uuid())
@@ -86,6 +84,9 @@ Stores auditor answers.
 - `answer_option_id` (UUID, FK → answer_options.id, NOT NULL)
 - `auditor_id` (UUID, FK → user_profiles.id, NOT NULL)
 - `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
+
+**Constraints:**
+- UNIQUE(audit_data_id, question_id)
 
 ---
 
