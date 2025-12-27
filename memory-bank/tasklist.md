@@ -546,288 +546,44 @@ CREATE POLICY "Admins manage assignments"
 
 ## Phase 7: Admin Dashboard - Reporting
 
-### Task 7.1: Create Reports Page
-**Goal**: Export audit results
-- [x] Create `src/pages/admin/Reports.jsx`
-- [x] Date range picker (start date, end date)
-- [x] "Export CSV" button
-
-**Files**: `src/pages/admin/Reports.jsx`
+## Phase 7: Reporting (Done ✅)
+- [x] Create Reports Page (`src/pages/admin/Reports.jsx`)
+- [x] Implement Export Query with table joins
+- [x] Generate CSV with full metadata retention
 
 ---
 
-### Task 7.2: Implement Export Query
-**Goal**: Fetch audit data with responses
-- [x] In `Reports.jsx`, create query function
-- [x] Join tables: `audit_data`, `audit_responses`, `questions`, `answer_options`, `user_profiles`
-- [x] Filter by date range
-- [x] Return combined dataset
-
-**Files**: `src/pages/admin/Reports.jsx`
-
----
-
-### Task 7.3: Generate CSV from Query Results
-**Goal**: Convert data to CSV format
-- [x] Use PapaParse to generate CSV
-- [x] Columns: all audit_data fields + question texts + answers + auditor email
-- [x] UTF-8 BOM encoding
-- [x] Trigger download
-
-**Files**: `src/pages/admin/Reports.jsx`
+## Phase 8: Auditor Dashboard & Interface (Done ✅)
+- [x] Create Auditor Layout (`src/pages/auditor/AuditorLayout.jsx`)
+- [x] Create Auditor Dashboard (`src/pages/auditor/AuditorDashboard.jsx`)
+- [x] Implement Audit Queue Logic (Auto-fetch next pending)
+- [x] Create Audit Interface (`src/pages/auditor/AuditInterface.jsx`)
+- [x] Integrate Audio Controls & Map Preview
+- [x] Dynamic Database-driven Question Rendering
+- [x] Submit answers & update record status
 
 ---
 
-## Phase 8: Auditor Dashboard
+## Phase 9: Final Polish & Verification
+**Goal**: Ensure production readiness and consistent look & feel.
 
-### Task 8.1: Create Auditor Layout
-**Goal**: Build auditor dashboard shell
-- [ ] Create `src/pages/auditor/AuditorLayout.jsx`
-- [ ] Header with logout
-- [ ] Outlet for nested routes
+### Task 9.1: Responsive UI Audit
+**Goal**: Fix any remaining layout issues on different screens
+- [ ] Test Admin and Auditor interfaces on Laptop (16:9) and Desktop
+- [ ] Fix any overflow or misalignment in tables
 
-**Files**: `src/pages/auditor/AuditorLayout.jsx`
-
----
-
-### Task 8.2: Create Auditor Dashboard Home
-**Goal**: Show auditor metrics
-- [ ] Create `src/pages/auditor/Dashboard.jsx`
-- [ ] Fetch and display:
-  - Total assigned records
-  - Completed records
-  - Remaining records
-  - Daily limit
-  - Today's completed count
-- [ ] "Start Audit" button
-
-**Files**: `src/pages/auditor/Dashboard.jsx`
+### Task 9.2: Error Boundary & Loading States
+**Goal**: Prevent app crashes and show better feedback
+- [ ] Add Error Boundaries for Map and Audio Player
+- [ ] Improve loading spinners during data fetch
 
 ---
 
-### Task 8.3: Implement Daily Limit Check
-**Goal**: Prevent exceeding daily limit
-- [ ] Create `src/utils/checkDailyLimit.js`
-- [ ] Query today's completed audits for current user
-- [ ] Compare with user's daily_limit
-- [ ] Return true/false
-
-**Files**: `src/utils/checkDailyLimit.js`
+## Phase 10: Completion & Review
+- [ ] End-to-end testing of CSV Upload -> Auto-Assign -> Auditor Review -> Admin Report Export
+- [ ] Final Documentation update
 
 ---
 
-### Task 8.4: Create Audit Interface Page
-**Goal**: Display audit form
-- [ ] Create `src/pages/auditor/AuditInterface.jsx`
-- [ ] Fetch next assigned, pending record
-- [ ] Display contact details (like current app)
-- [ ] Display audio player with controls
-- [ ] Display map (Leaflet)
+**Summary**: The system is now fully functional. Admin can manage users, data, and questions. Auditors can review audio and location records. Reports can be exported as CSV.
 
-**Files**: `src/pages/auditor/AuditInterface.jsx`
-
----
-
-### Task 8.5: Fetch and Render Questions
-**Goal**: Show common + campaign questions
-- [ ] In `AuditInterface.jsx`, fetch:
-  - All common questions
-  - Campaign-specific questions for current record's campaign_id
-- [ ] Fetch answer options for each question
-- [ ] Render questions with radio buttons (like current app)
-
-**Files**: `src/pages/auditor/AuditInterface.jsx`
-
----
-
-### Task 8.6: Implement Answer Submission
-**Goal**: Save answers to database
-- [ ] In `AuditInterface.jsx`, create submit handler
-- [ ] Validate all questions answered
-- [ ] Insert answers into `audit_responses` table
-- [ ] Update `audit_data.status` to 'completed'
-- [ ] Update `audit_data.completed_at` timestamp
-- [ ] Redirect to dashboard or load next record
-
-**Files**: `src/pages/auditor/AuditInterface.jsx`
-
----
-
-### Task 8.7: Add Audio Controls (Reuse Current Logic)
-**Goal**: Enhanced audio playback
-- [ ] Copy audio control logic from current `App.jsx`
-- [ ] Implement speed toggle (1x, 1.25x, 1.5x)
-- [ ] Skip forward/backward buttons
-- [ ] Integrate into `AuditInterface.jsx`
-
-**Files**: `src/pages/auditor/AuditInterface.jsx`
-
----
-
-### Task 8.8: Add Map Preview (Reuse Current Component)
-**Goal**: Show contact location
-- [ ] Copy `MapPreview.jsx` component
-- [ ] Pass location data from current audit record
-- [ ] Display in `AuditInterface.jsx`
-
-**Files**: `src/components/MapPreview.jsx`, `src/pages/auditor/AuditInterface.jsx`
-
----
-
-## Phase 9: UI Polish & Styling
-
-### Task 9.1: Create Consistent Layout Styles
-**Goal**: Unified design across admin and auditor
-- [ ] Update `src/index.css` with global styles
-- [ ] Define color scheme, typography
-- [ ] Reuse current app's clean design patterns
-
-**Files**: `src/index.css`
-
----
-
-### Task 9.2: Style Admin Dashboard
-**Goal**: Professional admin interface
-- [ ] Style sidebar navigation
-- [ ] Style tables (user list, data list, questions)
-- [ ] Add hover effects, buttons
-- [ ] Responsive design
-
-**Files**: `src/pages/admin/*.jsx`, `src/App.css`
-
----
-
-### Task 9.3: Style Auditor Interface
-**Goal**: Clean, focused audit experience
-- [ ] Style audit form (similar to current app)
-- [ ] Style question cards
-- [ ] Style audio player controls
-- [ ] Ensure mobile responsiveness
-
-**Files**: `src/pages/auditor/AuditInterface.jsx`, `src/App.css`
-
----
-
-### Task 9.4: Add Loading States
-**Goal**: Better UX during async operations
-- [ ] Create `src/components/LoadingSpinner.jsx`
-- [ ] Add to all pages with data fetching
-- [ ] Show during CSV import, data loading
-
-**Files**: `src/components/LoadingSpinner.jsx`
-
----
-
-### Task 9.5: Add Error Handling UI
-**Goal**: User-friendly error messages
-- [ ] Create `src/components/ErrorMessage.jsx`
-- [ ] Display Supabase errors gracefully
-- [ ] Add retry buttons where applicable
-
-**Files**: `src/components/ErrorMessage.jsx`
-
----
-
-## Phase 10: Testing & Deployment
-
-### Task 10.1: Test Admin Workflows
-**Goal**: Verify all admin features work
-- [ ] Test user creation and role assignment
-- [ ] Test CSV upload and import
-- [ ] Test manual and auto-assignment
-- [ ] Test question management
-- [ ] Test report export
-
----
-
-### Task 10.2: Test Auditor Workflows
-**Goal**: Verify auditor experience
-- [ ] Test login and dashboard
-- [ ] Test daily limit enforcement
-- [ ] Test audit interface (audio, questions, map)
-- [ ] Test answer submission
-- [ ] Test navigation between records
-
----
-
-### Task 10.3: Seed Database with Test Data
-**Goal**: Populate database for testing
-- [ ] Create SQL script: `seed-data.sql`
-- [ ] Insert sample users (1 admin, 2 auditors)
-- [ ] Insert sample audit_data records
-- [ ] Insert sample questions (common + campaign)
-- [ ] Insert sample answer options
-
-**Files**: `seed-data.sql`
-
----
-
-### Task 10.4: Update Documentation
-**Goal**: Document new system
-- [ ] Update `README.md` with setup instructions
-- [ ] Document Supabase setup steps
-- [ ] Document environment variables
-- [ ] Add user guide for admin and auditor
-
-**Files**: `README.md`
-
----
-
-### Task 10.5: Deploy to Production
-**Goal**: Host the app
-- [ ] Build production bundle: `npm run build`
-- [ ] Deploy to Vercel/Netlify
-- [ ] Configure environment variables on hosting platform
-- [ ] Test production deployment
-
----
-
-## Phase 11: Advanced Features (Optional)
-
-### Task 11.1: Add Bulk User Import
-**Goal**: Import multiple users from CSV
-- [ ] Admin can upload CSV with user emails
-- [ ] Auto-create user accounts
-- [ ] Assign default role and daily limit
-
----
-
-### Task 11.2: Add Audit History View
-**Goal**: Auditors can review past audits
-- [ ] Create page showing completed audits
-- [ ] Display submitted answers
-- [ ] Read-only view
-
----
-
-### Task 11.3: Add Real-time Updates
-**Goal**: Live dashboard updates
-- [ ] Use Supabase Realtime subscriptions
-- [ ] Update admin dashboard when audits completed
-- [ ] Update auditor dashboard when new data assigned
-
----
-
-### Task 11.4: Add Audit Quality Scoring
-**Goal**: Track auditor performance
-- [ ] Admin sets "correct" answers for sample audits
-- [ ] Compare auditor answers to correct answers
-- [ ] Calculate accuracy score per auditor
-
----
-
-## Summary
-
-**Total Tasks**: ~70 small, manageable steps
-
-**Estimated Timeline**: 
-- Phase 1-2: 1-2 days (setup + database)
-- Phase 3-4: 2-3 days (auth + admin user management)
-- Phase 5-6: 3-4 days (data + question management)
-- Phase 7-8: 3-4 days (reporting + auditor interface)
-- Phase 9-10: 2-3 days (polish + testing)
-
-**Any agent can pick up any task** with context from:
-- This task list
-- `memory-bank/projectbrief.md`
-- `memory-bank/database-schema.md` (to be created in Task 2.1)

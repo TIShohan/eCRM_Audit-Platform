@@ -9,7 +9,9 @@ import DataManagement from './pages/admin/DataManagement'
 import DataList from './pages/admin/DataList'
 import QuestionManagement from './pages/admin/QuestionManagement'
 import Reports from './pages/admin/Reports'
+import AuditorLayout from './pages/auditor/AuditorLayout'
 import AuditorDashboard from './pages/auditor/AuditorDashboard'
+import AuditInterface from './pages/auditor/AuditInterface'
 
 function App() {
   return (
@@ -40,10 +42,13 @@ function App() {
             path="/auditor"
             element={
               <ProtectedRoute>
-                <AuditorDashboard />
+                <AuditorLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AuditorDashboard />} />
+            <Route path="audit" element={<AuditInterface />} />
+          </Route>
 
           {/* Root redirect based on role */}
           <Route path="/" element={<RootRedirect />} />
