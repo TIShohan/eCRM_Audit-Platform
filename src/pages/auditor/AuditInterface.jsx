@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import MapPreview from '../../components/MapPreview'
 
 export default function AuditInterface() {
-    const { user } = useAuth()
+    const { user, profile } = useAuth()
     const navigate = useNavigate()
     const audioRef = useRef(null)
 
@@ -17,6 +17,7 @@ export default function AuditInterface() {
     // UI States
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
+    const [limitReached, setLimitReached] = useState(false)
     const [playbackRate, setPlaybackRate] = useState(1)
     const [isPlaying, setIsPlaying] = useState(false)
     const [progress, setProgress] = useState(0)
@@ -29,8 +30,25 @@ export default function AuditInterface() {
         try {
             setLoading(true)
             setAnswers({})
+            setLimitReached(false)
 
-            // 1. Fetch one pending record assigned to this auditor
+            // 1. Check daily limit first
+            const today = new Date().toISOString().split('T')[0]
+            const { count: todayCount } = await supabase
+                .from('audit_data')
+                .select('*', { count: 'exact', head: true })
+                .eq('assigned_to', user.id)
+                .eq('status', 'completed')
+                .gte('completed_at', `${today}T00:00:00`)
+
+            if (todayCount >= (profile?.daily_limit || 50)) {
+                setLimitReached(true)
+                setRecord(null)
+                setLoading(false)
+                return
+            }
+
+            // 2. Fetch one pending record assigned to this auditor
             const { data: records, error: recError } = await supabase
                 .from('audit_data')
                 .select('*')
@@ -49,7 +67,7 @@ export default function AuditInterface() {
             const currentRecord = records[0]
             setRecord(currentRecord)
 
-            // 2. Fetch questions (Common or Campaign-specific for this record)
+            // 3. Fetch questions (Common or Campaign-specific for this record)
             const { data: qData, error: qError } = await supabase
                 .from('questions')
                 .select('*, answer_options(*)')
@@ -146,6 +164,25 @@ export default function AuditInterface() {
     }
 
     if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading audit environment...</div>
+
+    if (limitReached) {
+        return (
+            <div style={{ padding: '60px 20px', textAlign: 'center', background: 'white', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: '50px', marginBottom: '20px' }}>🛑</div>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a202c', marginBottom: '10px' }}>Daily Limit Reached</h2>
+                <p style={{ color: '#718096', marginBottom: '30px' }}>
+                    You have reached your daily limit of <strong>{profile?.daily_limit}</strong> audits.<br />
+                    Please come back tomorrow or contact your supervisor.
+                </p>
+                <button
+                    onClick={() => navigate('/auditor')}
+                    style={{ padding: '12px 24px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}
+                >
+                    Return to Dashboard
+                </button>
+            </div>
+        )
+    }
 
     if (!record) {
         return (

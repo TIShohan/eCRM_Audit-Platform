@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function UserForm({ user, onClose, onSuccess }) {
@@ -19,9 +20,15 @@ export default function UserForm({ user, onClose, onSuccess }) {
 
         try {
             if (isEditing) {
-                // Update logic (we'll implement this later if needed)
-                // For now, focus on creation
-                alert('Edit functionality pending Task 4.4 refinement')
+                const { error: updateError } = await supabase
+                    .from('user_profiles')
+                    .update({
+                        role,
+                        daily_limit: parseInt(dailyLimit)
+                    })
+                    .eq('id', user.id)
+
+                if (updateError) throw updateError
             } else {
                 const { error } = await signUp(email, password, role, parseInt(dailyLimit))
                 if (error) throw error
