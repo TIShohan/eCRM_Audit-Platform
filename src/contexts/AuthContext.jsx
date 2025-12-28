@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
-    const signUp = async (email, password, role = 'auditor', dailyLimit = 50) => {
+    const signUp = async (email, password, role = 'auditor', dailyLimit = 50, fullName = '', mobileNumber = '') => {
         try {
             // Sign up user
             const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -87,7 +87,13 @@ export const AuthProvider = ({ children }) => {
             if (authData.user) {
                 const { error: profileError } = await supabase
                     .from('user_profiles')
-                    .update({ role, daily_limit: dailyLimit, email })
+                    .update({
+                        role,
+                        daily_limit: dailyLimit,
+                        email,
+                        full_name: fullName,
+                        mobile_number: mobileNumber
+                    })
                     .eq('id', authData.user.id)
 
                 if (profileError) throw profileError

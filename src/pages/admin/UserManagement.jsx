@@ -18,7 +18,7 @@ export default function UserManagement() {
             // Fetch profiles
             const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
-                .select('id, email, role, daily_limit, created_at')
+                .select('id, email, full_name, mobile_number, role, daily_limit, created_at')
                 .order('created_at', { ascending: false })
 
             if (profileError) throw profileError
@@ -31,12 +31,14 @@ export default function UserManagement() {
                     .from('audit_data')
                     .select('*', { count: 'exact', head: true })
                     .eq('assigned_to', profile.id)
+                    .eq('is_archived', false)
 
                 const { count: completedCount } = await supabase
                     .from('audit_data')
                     .select('*', { count: 'exact', head: true })
                     .eq('assigned_to', profile.id)
                     .eq('status', 'completed')
+                    .eq('is_archived', false)
 
                 return {
                     ...profile,
@@ -107,7 +109,9 @@ export default function UserManagement() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                         <tr style={{ background: '#f7fafc', borderBottom: '1px solid #edf2f7' }}>
-                            <th style={thStyle}>User Email</th>
+                            <th style={thStyle}>Full Name</th>
+                            <th style={thStyle}>Mobile</th>
+                            <th style={thStyle}>Email</th>
                             <th style={thStyle}>Role</th>
                             <th style={thStyle}>Limit</th>
                             <th style={thStyle}>Assigned</th>
@@ -119,15 +123,17 @@ export default function UserManagement() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="7" style={{ padding: '20px', textAlign: 'center' }}>Loading users...</td>
+                                <td colSpan="9" style={{ padding: '20px', textAlign: 'center' }}>Loading users...</td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan="7" style={{ padding: '20px', textAlign: 'center' }}>No users found.</td>
+                                <td colSpan="9" style={{ padding: '20px', textAlign: 'center' }}>No users found.</td>
                             </tr>
                         ) : (
                             users.map((user) => (
                                 <tr key={user.id} style={{ borderBottom: '1px solid #edf2f7' }}>
+                                    <td style={tdStyle}>{user.full_name || 'N/A'}</td>
+                                    <td style={tdStyle}>{user.mobile_number || 'N/A'}</td>
                                     <td style={tdStyle}>{user.email || 'No Email'}</td>
                                     <td style={tdStyle}>
                                         <span style={{

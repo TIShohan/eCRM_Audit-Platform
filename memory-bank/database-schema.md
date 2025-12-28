@@ -1,128 +1,93 @@
-# Database Schema: eCRM Audit Platform
+# Database Schema: eCRM Audit Platform v2.0
 
 ## Overview
-PostgreSQL database schema for multi-user audit platform with role-based access control and full data retention for reporting.
+High-performance PostgreSQL schema optimized for a "Global Queue" pull model with role-based access control and high-speed inventory aggregation via Supabase.
 
 ---
 
-## Tables
+## Tables (Production Schema)
 
 ### 1. user_profiles
-Extends Supabase `auth.users` with role and daily limit.
-
-**Columns:**
-- `id` (UUID, PK, FK → auth.users.id)
+Extends `auth.users` with application-specific metadata.
+- `id` (UUID, PK → auth.users)
 - `email` (TEXT)
-- `role` (TEXT, NOT NULL, CHECK: 'admin' | 'auditor', DEFAULT: 'auditor')
-- `daily_limit` (INTEGER, DEFAULT: 50)
-- `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
-
----
+- `full_name` (TEXT)
+- `mobile_number` (TEXT)
+- `role` (TEXT, CHECK: 'admin' | 'auditor')
+- `daily_limit` (INTEGER, Default: 50)
+- `created_at` (TIMESTAMPTZ)
 
 ### 2. audit_data
-Stores full CSV records for parity between upload and export.
-
-**Columns:**
-- `id` (UUID, PK, DEFAULT: gen_random_uuid())
-- `assigned_region` (TEXT)
-- `assigned_area` (TEXT)
-- `assigned_territory` (TEXT)
-- `assigned_house` (TEXT)
-- `assigned_point` (TEXT)
-- `auditee_id` (TEXT)
-- `auditee_name` (TEXT)
-- `route` (TEXT)
-- `cluster` (TEXT)
-- `outlet_name` (TEXT)
+The global pool of records containing specialized eCRM metadata.
+- `id` (UUID, PK)
 - `contact_id` (TEXT, NOT NULL)
-- `contact_date` (TEXT)
-- `location` (TEXT) -- "lat,lng" format
-- `audio_link` (TEXT)
-- `start_time` (TEXT)
-- `end_time` (TEXT)
-- `duration` (TEXT)
 - `campaign_id` (TEXT, NOT NULL)
 - `campaign_name` (TEXT)
-- `status` (TEXT, CHECK: 'pending' | 'in_progress' | 'completed', DEFAULT: 'pending')
-- `assigned_to` (UUID, FK → user_profiles.id, NULLABLE)
-- `completed_at` (TIMESTAMP WITH TIME ZONE, NULLABLE)
-- `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
-
----
+- `status` (TEXT, CHECK: 'pending' | 'in_progress' | 'completed')
+- `assigned_to` (UUID, FK → user_profiles.id)
+- `is_archived` (BOOLEAN, Default: false)
+- `completed_at` (TIMESTAMPTZ)
+- **Metadata Fields:** `assigned_region`, `assigned_area`, `assigned_territory`, `assigned_house`, `assigned_point`, `auditee_id`, `auditee_name`, `route`, `cluster`, `outlet_name`, `contact_date`, `location`, `audio_link`, `start_time`, `end_time`, `duration`
+- `created_at` (TIMESTAMPTZ)
 
 ### 3. questions
-Stores common and campaign-specific questions.
-
-**Columns:**
-- `id` (UUID, PK, DEFAULT: gen_random_uuid())
+Audit evaluation criteria.
+- `id` (UUID, PK)
 - `question_text` (TEXT, NOT NULL)
-- `question_type` (TEXT, NOT NULL, CHECK: 'common' | 'campaign')
+- `question_type` (TEXT, CHECK: 'common' | 'campaign')
 - `campaign_id` (TEXT, NULLABLE)
-- `order_index` (INTEGER, NOT NULL)
-- `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
-
----
+- `order_index` (INTEGER)
+- `created_at` (TIMESTAMPTZ)
 
 ### 4. answer_options
-Multiple choice options for questions.
-
-**Columns:**
-- `id` (UUID, PK, DEFAULT: gen_random_uuid())
-- `question_id` (UUID, FK → questions.id, NOT NULL, ON DELETE CASCADE)
-- `option_text` (TEXT, NOT NULL)
-- `order_index` (INTEGER, NOT NULL)
-
----
+Predefined choices for questions.
+- `id` (UUID, PK)
+- `question_id` (UUID, FK → questions.id)
+- `option_text` (TEXT)
+- `order_index` (INTEGER)
+- `created_at` (TIMESTAMPTZ)
 
 ### 5. audit_responses
-Stores auditor answers for specific record-question pairs.
+The junction table storing completed audit evaluations.
+- `id` (UUID, PK)
+- `audit_data_id` (UUID, FK → audit_data.id)
+- `question_id` (UUID, FK → questions.id)
+- `answer_option_id` (UUID, FK → answer_options.id)
+- `auditor_id` (UUID, FK → user_profiles.id)
+- `created_at` (TIMESTAMPTZ)
 
-**Columns:**
-- `id` (UUID, PK, DEFAULT: gen_random_uuid())
-- `audit_data_id` (UUID, FK → audit_data.id, NOT NULL, ON DELETE CASCADE)
-- `question_id` (UUID, FK → questions.id, NOT NULL)
-- `answer_option_id` (UUID, FK → answer_options.id, NOT NULL)
-- `auditor_id` (UUID, FK → user_profiles.id, NOT NULL)
-- `created_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
-
-**Constraints:**
-- UNIQUE(audit_data_id, question_id)
+### 6. assignments (Legacy/Audit Trail)
+Used for tracking manual distribution history if applicable.
+- `id` (UUID, PK)
+- `audit_data_id` (UUID, FK)
+- `auditor_id` (UUID, FK)
+- `assigned_by` (UUID, FK)
+- `assigned_at` (TIMESTAMPTZ)
 
 ---
 
-### 6. assignments
-Tracks data assignment to auditors.
+## Views
 
-**Columns:**
-- `id` (UUID, PK, DEFAULT: gen_random_uuid())
-- `audit_data_id` (UUID, FK → audit_data.id, NOT NULL, ON DELETE CASCADE)
-- `auditor_id` (UUID, FK → user_profiles.id, NOT NULL)
-- `assigned_by` (UUID, FK → user_profiles.id, NOT NULL)
-- `assigned_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
----
-
-## Helper Functions (Security)
-
-### 1. is_admin()
-Checks if the current authenticated user has the 'admin' role. Uses `SECURITY DEFINER` to bypass RLS recursion.
-
+### 1. daily_inventory_summary
+Aggregates metrics for the Admin Dashboard.
 ```sql
-CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.user_profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+CREATE OR REPLACE VIEW daily_inventory_summary AS
+SELECT 
+  (created_at AT TIME ZONE 'UTC')::date as upload_date,
+  count(*) as total,
+  count(*) FILTER (WHERE status = 'completed') as audited,
+  count(*) FILTER (WHERE assigned_to IS NOT NULL AND status = 'pending') as assigned,
+  count(*) FILTER (WHERE assigned_to IS NULL AND status = 'pending') as available
+FROM audit_data
+GROUP BY 1
+ORDER BY 1 DESC;
 ```
 
 ---
 
-## Row Level Security (RLS) Summary
-- **user_profiles**: Users see themselves; `is_admin()` users manage all.
-- **audit_data**: Auditors see/update assigned; `is_admin()` users manage all.
-- **questions/options**: Read-only for all; `is_admin()` users manage all.
-- **audit_responses**: Auditors manage own; `is_admin()` users view all.
-- **assignments**: Auditors see own; `is_admin()` users manage all.
+## Row Level Security (RLS)
+
+### Critical "Pull Model" Policies:
+1. **SELECT**: Auditors can see records where `assigned_to = auth.uid()` OR `assigned_to IS NULL`.
+2. **UPDATE**: Auditors can update unassigned records to claim them (`SET assigned_to = auth.uid()`) where `assigned_to IS NULL`.
+3. **ADMIN**: Admins have `ALL` privileges bypass.

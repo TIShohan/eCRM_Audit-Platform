@@ -113,6 +113,25 @@ export default function DataManagement() {
         }
     }
 
+    const handleArchive = async () => {
+        try {
+            setCleaning(true)
+            const { error: archError } = await supabase
+                .from('audit_data')
+                .update({ is_archived: true })
+                .eq('status', 'completed')
+                .eq('is_archived', false)
+
+            if (archError) throw archError
+
+            alert('Successfully archived all completed records. They will no longer appear in active metrics or queues.')
+        } catch (err) {
+            alert('Archiving failed: ' + err.message)
+        } finally {
+            setCleaning(false)
+        }
+    }
+
     return (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '60px' }}>
             <div style={{ width: '100%', maxWidth: '1000px' }}>
@@ -120,6 +139,7 @@ export default function DataManagement() {
                     Data Management
                 </h1>
 
+                {/* CSV Import Section */}
                 <div style={{
                     background: 'white',
                     padding: '40px',
@@ -127,7 +147,7 @@ export default function DataManagement() {
                     boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
                     textAlign: 'center',
                     border: '2px dashed #e2e8f0',
-                    marginBottom: '40px'
+                    marginBottom: '30px'
                 }}>
                     <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>Full CSV Import</h2>
                     <p style={{ color: '#718096', marginBottom: '30px' }}>
@@ -173,6 +193,37 @@ export default function DataManagement() {
                             <p>{results.message}</p>
                         </div>
                     )}
+                </div>
+
+                {/* Archiving Section */}
+                <div style={{
+                    background: 'white',
+                    padding: '30px',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
+                    marginBottom: '30px',
+                    border: '1px solid #e2e8f0'
+                }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#2d3748', marginBottom: '10px' }}>Data Archiving</h2>
+                    <p style={{ color: '#718096', fontSize: '14px', marginBottom: '20px' }}>
+                        Archiving moves completed records out of the active dashboard and auditor queue while preserving them in the database for history/exports.
+                    </p>
+                    <button
+                        onClick={handleArchive}
+                        disabled={cleaning}
+                        style={{
+                            padding: '12px 24px',
+                            background: '#3182ce',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            opacity: cleaning ? 0.7 : 1
+                        }}
+                    >
+                        {cleaning ? 'Archiving...' : 'Archive Completed Audits'}
+                    </button>
                 </div>
 
                 {/* Cleanup Tools Section */}

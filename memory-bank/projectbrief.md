@@ -1,60 +1,36 @@
 # Project Brief: eCRM Audit Platform v2.0
 
 ## Project Overview
-The eCRM Audit Platform is a multi-user, database-driven web application for systematic review and quality assessment of eCRM (Electronic Customer Relationship Management) campaign audio recordings. The platform features role-based access control with Admin and Auditor roles, automated workflow management, and centralized data storage using Supabase.
+A multi-user, industrial-scale audit management platform for systematically reviewing eCRM campaign audio recordings. Powered by Supabase, the platform enables a frictionless "Self-Service" workflow between admins and auditors.
 
 ## Vision Statement
-Transform manual CSV-based auditing into an automated, scalable platform where administrators control data flow, question configuration, and user management, while auditors focus solely on efficient audio review with real-time progress tracking.
+Eliminate administrative bottlenecks by providing a high-level inventory management interface for admins and a streamlined, quota-driven pull queue for auditors.
 
 ## Core Requirements
 
-### Multi-User System
-1. **Authentication & Authorization**: Email/password login with role-based access (Admin/Auditor)
-2. **User Management**: Admin creates users, assigns roles, sets daily work limits
-3. **Database-Driven**: All data stored in Supabase PostgreSQL (no localStorage dependency)
-4. **Automated Workflow**: Admins upload CSV → assign to auditors → auditors complete work → admins export results
+### Automated Workflow (The "Pull" Model)
+1. **Admin Ingestion**: Admins upload global CSV data which enters the unassigned pool.
+2. **Auditor Claiming**: The Auditor interface automatically pulls the oldest unassigned pending record and "claims" it for the current user.
+3. **No-Manual-Assignment**: Admins no longer need to pre-distribute records; they simply monitor the "Daily Quota" and "Global Available" metrics.
 
-### Admin Functionality
-1. **User Management**: Create users, assign roles, set daily limits, view per-user metrics
-2. **Data Management**: Upload CSV to database, assign records (manual or auto-distribute)
-3. **Question Configuration**: Create/edit common and campaign-specific questions with answer options
-4. **Reporting**: Export audit results with date range filtering
+### Admin Features
+1. **Inventory Dashboard**: High-level tracking of Total, Audited, Claimed, and Available records grouped by **Upload Date**.
+2. **User Control**: Management of auditors including Full Name, Mobile, Email, and Daily Limit quotas.
+3. **Data Lifecycle**: "Danger Zone" tools for purging completed audits or resetting the entire database for new campaigns.
+4. **Reporting**: Advanced CSV exports merging contact metadata with auditor responses.
 
-### Auditor Functionality
-1. **Dashboard**: View assigned records, completed count, remaining work, daily limit status
-2. **Audit Interface**: Audio playback, contact details, map visualization, dynamic questions
-3. **Answer Submission**: All answers auto-saved to database
-4. **Daily Limit Enforcement**: Cannot exceed admin-set daily work limit
-
-### Preserved Features from v1.0
-- Audio player with variable speed and skip controls
-- Interactive map visualization (Leaflet + OpenStreetMap)
-- Bengali language support
-- CSV export with UTF-8 BOM encoding
-- Clean, minimal UI design
-
-## Target Users
-- **Admins**: QA managers, campaign supervisors
-- **Auditors**: Quality assurance team members, internal reviewers
-
-## Key Constraints
-- **Backend**: Supabase free tier only
-- **Audio Storage**: S3 URLs stored as text (no file uploads to Supabase)
-- **No Manual CSV**: Auditors never handle CSV files
-- **Role Separation**: Strict access control between admin and auditor functions
-- **Daily Limits**: Enforced at application level
-
-## Success Criteria
-- Admin can onboard new auditor in < 2 minutes
-- Admin can upload and assign 500 records in < 1 minute
-- Auditor completes one audit in < 3 minutes (same as v1.0)
-- Zero data loss with database persistence
-- Questions configurable without code changes
+### Auditor Features
+1. **Quota-Focused Dashboard**: Simplified UI showing only "Daily Quota Left" and "Completed Today".
+2. **Seamless Navigation**: "Complete & Next" workflow that automatically claims the next available record until the daily limit is hit.
+3. **Rich Context**: Interactive maps, audio player, and dynamic question rendering.
 
 ## Technical Scope
-- Multi-page React application with routing
-- Supabase backend (Auth, Database, RLS policies)
-- Role-based dashboards (Admin vs Auditor)
-- CSV parsing for admin upload only
-- Responsive design for desktop usage
-- Modern browser compatibility 
+- **Backend**: Supabase (PostgreSQL + Auth).
+- **Architecture**: Pull-based global queue (Self-Service).
+- **Performance**: PostgreSQL Views for real-time inventory aggregation.
+- **Design**: Minimalist, premium dashboard optimized for 16:9 laptop screens.
+
+## Success Criteria
+- Handle datasets of 100,000+ records without performance degradation.
+- Zero administrative intervention required for day-to-day record distribution.
+- Full contact metadata retention for every exported audit report.

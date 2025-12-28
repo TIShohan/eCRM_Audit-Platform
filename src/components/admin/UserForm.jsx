@@ -3,6 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function UserForm({ user, onClose, onSuccess }) {
+    const [fullName, setFullName] = useState(user?.full_name || '')
+    const [mobileNumber, setMobileNumber] = useState(user?.mobile_number || '')
     const [email, setEmail] = useState(user?.email || '')
     const [password, setPassword] = useState('')
     const [role, setRole] = useState(user?.role || 'auditor')
@@ -24,13 +26,15 @@ export default function UserForm({ user, onClose, onSuccess }) {
                     .from('user_profiles')
                     .update({
                         role,
-                        daily_limit: parseInt(dailyLimit)
+                        daily_limit: parseInt(dailyLimit),
+                        full_name: fullName,
+                        mobile_number: mobileNumber
                     })
                     .eq('id', user.id)
 
                 if (updateError) throw updateError
             } else {
-                const { error } = await signUp(email, password, role, parseInt(dailyLimit))
+                const { error } = await signUp(email, password, role, parseInt(dailyLimit), fullName, mobileNumber)
                 if (error) throw error
             }
 
@@ -48,6 +52,28 @@ export default function UserForm({ user, onClose, onSuccess }) {
                 <h2 style={{ marginBottom: '20px' }}>{isEditing ? 'Edit User' : 'Create New User'}</h2>
 
                 <form onSubmit={handleSubmit}>
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Full Name</label>
+                        <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            required
+                            style={inputStyle}
+                        />
+                    </div>
+
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Mobile Number</label>
+                        <input
+                            type="tel"
+                            value={mobileNumber}
+                            onChange={(e) => setMobileNumber(e.target.value)}
+                            required
+                            style={inputStyle}
+                        />
+                    </div>
+
                     <div style={inputGroupStyle}>
                         <label style={labelStyle}>Email</label>
                         <input

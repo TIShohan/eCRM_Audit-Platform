@@ -1,84 +1,49 @@
-# Product Context: eCRM Audio Portal
+# Product Context: eCRM Audit Platform v2.0
 
 ## Problem Statement
 
 ### The Challenge
-eCRM campaigns generate hundreds of audio recordings daily from Research Associate (RA) interactions with customers. Without a systematic review process, quality assurance becomes:
-- **Inconsistent**: Manual review processes vary between auditors
-- **Time-consuming**: No structured workflow for audio assessment  
-- **Untrackable**: Difficult to maintain progress across large datasets
-- **Error-prone**: Manual data entry leads to inconsistencies
-- **Inefficient**: No standardized reporting format
-
-### Impact of Current State
-- Quality standards cannot be effectively monitored
-- Campaign effectiveness measurement is limited
-- Training needs for RAs are not properly identified
-- Compliance issues may go undetected
-- Resource allocation for QA is inefficient
+eCRM campaigns generate thousands of audio recordings daily. Without a systematic, scalable review process, quality assurance is:
+- **Bottle-necked**: Manual assignment of files to auditors is slow and prone to errors.
+- **Inconsistent**: Auditors may follow different evaluation standards without centralized question management.
+- **Opaque**: Tracking progress across massive datasets is difficult without real-time aggregation.
+- **Insecure**: Sharing files and results via spreadsheets leads to data leaks and versioning issues.
 
 ## Solution Approach
 
 ### Core Value Proposition
-A purpose-built audio review application that transforms ad-hoc quality assurance into a systematic, trackable, and consistent process.
+A cloud-native, industrial-scale audit management system that automates the distribution of work via a self-service queue and centralizes evaluation data for instant reporting.
 
-### Key Problems Solved
+### Key Problems Solved (v2.0)
 
-1. **Standardization**: 
-   - Consistent question sets across all reviews
-   - Standardized data collection format
-   - Uniform evaluation criteria
+1. **Automated Distribution (Self-Service)**:
+   - Eliminates manual assignment; auditors "pull" work as they go.
+   - Enforces daily quotas automatically per user.
 
-2. **Efficiency**:
-   - Streamlined navigation through audio files
-   - Enhanced audio controls for faster review
-   - Automated progress tracking
+2. **Centralized Question Management**:
+   - Admins can update audit criteria instantly via a UI.
+   - Supports both global and campaign-specific logic.
 
-3. **Data Quality**:
-   - Structured answer collection
-   - Automatic CSV generation
-   - No manual transcription errors
+3. **High-Scale Monitoring**:
+   - Real-time inventory tracking (Total, Audited, Available) across huge datasets.
+   - Professional dashboard for management to monitor campaign health.
 
-4. **Accountability**:
-   - Complete audit trail of reviews
-   - Progress tracking and completion status
-   - Exportable reports for management
+4. **Data Security & Integrity**:
+   - Row Level Security (RLS) ensures auditors only access their own assigned or unassigned data.
+   - Centralized database prevents "lost" results or duplicate reviews.
 
 ## User Experience Goals
 
-### Primary User Journey
-1. **Quick Setup**: Import campaign data via CSV upload
-2. **Focused Review**: Clean interface highlighting current contact and audio
-3. **Efficient Navigation**: Simple controls to move between contacts
-4. **Contextual Information**: Contact details and location data readily available
-5. **Structured Assessment**: Clear questions with predefined answer options
-6. **Progress Visibility**: Always know current position and completion status
-7. **Easy Export**: One-click CSV generation for reporting
+### Primary User Journeys
+1. **The Admin**: Uploads bulk CSV data, manages auditors/quotas, and exports final reports.
+2. **The Auditor**: Logs in, sees their daily target, and works through a seamless "Complete & Next" queue.
 
 ### Design Principles
-- **Minimize Cognitive Load**: Present only essential information per screen
-- **Maintain Context**: Show campaign and contact details alongside audio
-- **Ensure Continuity**: Preserve progress through browser sessions
-- **Support Efficiency**: Keyboard shortcuts and enhanced audio controls
-- **Provide Feedback**: Clear visual indicators for completion status
+- **Operational Focus**: The interface is optimized for speed and repetition.
+- **No Friction**: Automate every step between "Review" and "Next Record".
+- **Contextual Clarity**: All metadata (location, campaign, dates) is visible alongside the audio player.
 
 ## Business Impact
-
-### Immediate Benefits
-- Reduced time per audio review
-- Consistent quality metrics across campaigns
-- Elimination of manual data entry errors
-- Improved auditor productivity
-
-### Long-term Value
-- Better campaign performance insights
-- Enhanced RA training programs based on common issues
-- Improved customer experience through quality monitoring
-- Data-driven decision making for campaign optimization
-
-## Success Metrics
-- Review time per audio file
-- Consistency of question responses
-- Completion rate of uploaded datasets
-- User adoption across QA teams
-- Reduction in manual reporting time 
+- **Throughput**: Significantly increases the number of audits performed per day by eliminating administrative overhead.
+- **Accuracy**: Dynamic forms andGPS mapping provide higher confidence in audit results.
+- **Speed-to-Insight**: Exportable data is always ready for stakeholder review, with no manual merging required.

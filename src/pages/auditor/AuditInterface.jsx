@@ -41,12 +41,14 @@ export default function AuditInterface() {
                     .select('*', { count: 'exact', head: true })
                     .eq('assigned_to', user.id)
                     .eq('status', 'completed')
+                    .eq('is_archived', false)
                     .gte('completed_at', `${today}T00:00:00`),
                 supabase
                     .from('audit_data')
                     .select('*', { count: 'exact', head: true })
                     .eq('assigned_to', user.id)
                     .eq('status', 'pending')
+                    .eq('is_archived', false)
             ])
 
             const todayCount = todayCountRes.count || 0
@@ -67,6 +69,7 @@ export default function AuditInterface() {
                 .select('*')
                 .eq('assigned_to', user.id)
                 .eq('status', 'pending')
+                .eq('is_archived', false)
                 .limit(1)
 
             let currentRecord = existingAssigned?.[0]
@@ -78,6 +81,7 @@ export default function AuditInterface() {
                     .select('*')
                     .is('assigned_to', null)
                     .eq('status', 'pending')
+                    .eq('is_archived', false)
                     .order('created_at', { ascending: true })
                     .limit(1)
 

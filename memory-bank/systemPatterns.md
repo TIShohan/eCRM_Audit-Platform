@@ -1,187 +1,82 @@
-# System Patterns: eCRM Audio Portal
+# System Patterns: eCRM Audit Platform v2.0
 
 ## Architecture Overview
 
-### Single-Page Application Pattern
-- **React SPA**: Single `App.jsx` component managing all application state
-- **No routing**: Linear workflow doesn't require complex navigation
-- **Component-based**: Modular UI components for reusability
+### Cloud-Native SPA Pattern
+- **React + Vite**: Modern frontend stack for a fast, responsive interface.
+- **Supabase Backend**: Replaces local state with a real-time PostgreSQL database, Auth, and RLS.
+- **React Router**: Multi-route architecture with role-based access control (Admin/Auditor).
 
-### Data Flow Architecture
+### Data Flow Architecture (v2.0 Pull Model)
 
 ```
-CSV Upload → PapaParse → State Management → LocalStorage Persistence
-     ↓              ↓              ↓              ↓
-File Input → Parsed Data → React State → Browser Storage
-     ↓              ↓              ↓              ↓
-Validation → Contact List → Current Index → Progress Tracking
+Admin CSV Upload → Supabase audit_data (assigned_to: NULL)
+      ↓
+Auditor Dashboard → Pull Next Available (UPDATE assigned_to: auth.uid())
+      ↓
+Audit Interface → Capture Responses → Supabase audit_responses
+      ↓
+Admin Reporting → PostgreSQL Views → CSV Export (Aggregated Metrics)
 ```
 
 ## Key Design Patterns
 
-### 1. State Management Pattern
-**Centralized State in App Component**
-- Single source of truth for all application data
-- React hooks (`useState`, `useEffect`) for state management
-- No external state management library needed due to application simplicity
+### 1. Self-Service "Pull" Pattern
+**Global Queue Distribution**
+- Instead of manual assignment, the system uses a "Pull" mechanism.
+- Auditors request the next record; the system identifies the oldest `pending` record where `assigned_to` is `NULL`.
+- **Atomic Claiming**: Uses a single SQL UPDATE with a LIMIT/ORDER clause to prevent race conditions (one record per auditor).
 
-```jsx
-const [data, setData] = useState([]);           // Contact/campaign data
-const [currentIndex, setCurrentIndex] = useState(0);  // Current contact
-const [answers, setAnswers] = useState({});     // User responses
-const [uploadSuccess, setUploadSuccess] = useState(false);
-```
+### 2. Role-Based Access Control (RBAC) Pattern
+**Context-Driven UI & Security**
+- `AuthContext.jsx`: Centralizes user session and profile data (including role).
+- `ProtectedRoute.jsx`: Enforces route access based on `profile.role`.
+- **Database Security**: Supabase Row Level Security (RLS) ensures auditors can only see unassigned records or those they have claimed.
 
-### 2. Persistence Pattern
-**LocalStorage Integration**
-- Automatic persistence on every state change
-- State restoration on application reload
-- Separate localStorage keys for different data types
+### 3. High-Performance Inventory Pattern
+**PostgreSQL Views for Real-time Monitoring**
+- `daily_inventory_summary`: A database view that aggregates record status by upload date.
+- This pattern allows the Admin Dashboard to load instantly even with 100,000+ records, as it only queries the pre-computed summary.
 
-```javascript
-// Save pattern
-useEffect(() => {
-  localStorage.setItem('audioReviewData', JSON.stringify(data));
-  localStorage.setItem('audioReviewAnswers', JSON.stringify(answers));
-}, [data, answers]);
+### 4. Dynamic Question Management
+**Normalized Schema Integration**
+- Questions and Answer Options are stored in relational tables.
+- `AuditInterface.jsx` fetches questions dynamically based on `question_type` (Common vs. Campaign-specific).
+- Allows admins to modify audit criteria without changing frontend code.
 
-// Restore pattern
-const [data, setData] = useState(() => {
-  const saved = localStorage.getItem('audioReviewData');
-  return saved ? JSON.parse(saved) : [];
-});
-```
-
-### 3. Question Management Pattern
-**JSON-Driven Question System**
-- `commonQuestions.json`: Universal questions for all contacts
-- `FixedQuestions.json`: Campaign-specific questions by campaign_id
-- Dynamic question rendering based on campaign context
-
-```javascript
-// Common questions: Applied to every contact
-commonQuestions.map((q, qIndex) => ...)
-
-// Fixed questions: Based on current campaign
-fixedQuestions[user.campaign_id]?.map((q, qIndex) => ...)
-```
-
-### 4. Answer Storage Pattern
-**Hierarchical Answer Structure**
-```javascript
-answers = {
-  [contactId]: {
-    common: [answer1, answer2, ...],    // Common question responses
-    fixed: [answer1, answer2, ...]      // Campaign-specific responses
-  }
-}
-```
+### 5. Custom Reset Logic Pattern
+**Business Cycle Accounting**
+- Monthly completion metrics carry over until the **5th day** of the following month.
+- This logic is encapsulated in the metrics-fetching functions to align with monthly performance reporting deadlines.
 
 ## Component Architecture
 
-### Core Components
+### Core Modules
 
-1. **App.jsx** (Main Container)
-   - State management hub
-   - CSV processing logic
-   - Navigation controls
-   - Question rendering
+1. **Admin Suite**
+   - `UserManagement.jsx`: CRUD for auditors and quota settings.
+   - `DataManagement.jsx`: Large-scale CSV ingestion (PapaParse + Supabase Batch).
+   - `InventoryDashboard.jsx`: High-level monitoring via `daily_inventory_summary`.
 
-2. **DownloadCSVButton.jsx** (Export Functionality)
-   - Answer aggregation
-   - CSV generation with proper encoding
-   - File download handling
+2. **Auditor Suite**
+   - `AuditorDashboard.jsx`: Focuses on personal quotas and monthly progress.
+   - `AuditInterface.jsx`: The "Active Review" environment with audio controls and GPS mapping.
 
-3. **MapPreview.jsx** (Location Visualization)
-   - Leaflet map integration
-   - Coordinate parsing and validation
-   - Geographic visualization of contact locations
+3. **Shared Components**
+   - `MapPreview.jsx`: Leaflet-based location visualization.
+   - `AuthContext.jsx`: Supabase session management.
 
-4. **ConfirmationModal.jsx** (User Confirmations)
-   - Two-step confirmation pattern
-   - App reset functionality
-   - Data loss prevention
+## State Management Patterns
 
-### Component Relationships
+### Server-State Dominance
+- Most state is managed by Supabase/PostgreSQL.
+- `useEffect` hooks in pages fetch the latest "truth" from the database on mount or action.
+- React state is used primarily for UI status (loading, submitting, local answer tracking).
 
-```
-App (Root)
-├── File Upload (Inline)
-├── Contact Details (Inline)
-├── MapPreview (Location visualization)
-├── Audio Player (Native HTML5)
-├── Question Forms (Dynamic rendering)
-├── Navigation Controls (Inline)
-├── DownloadCSVButton (Export)
-└── ConfirmationModal (Reset confirmation)
-```
+### Optimistic Claiming
+- When an auditor clicks "Start Audit", the record is claimed in the database *before* the UI transitions, ensuring no two auditors land on the same record.
 
-## Critical Implementation Paths
-
-### 1. CSV Processing Pipeline
-```
-File Input → FileReader API → PapaParse → Data Validation → State Update
-```
-
-**Key Logic:**
-- Header mapping from CSV columns to application fields
-- Data filtering (remove invalid entries)
-- Contact deduplication by contact_id
-
-### 2. Audio Management System
-```
-Audio URL → HTML5 Audio Element → Playback Controls → Speed Management
-```
-
-**Key Features:**
-- Variable playback speed (1x, 1.25x, 1.5x)
-- Skip forward/backward (5-second intervals)
-- Play/pause state management
-- Progress tracking integration
-
-### 3. Question Validation System
-```
-Question Rendering → User Input → Answer Validation → Progress Check
-```
-
-**Validation Rules:**
-- All common questions must be answered
-- All campaign-specific questions must be answered
-- Navigation blocked until current contact is complete
-
-### 4. Export Generation
-```
-Answer Collection → Data Aggregation → CSV Formatting → File Download
-```
-
-**Export Logic:**
-- Header generation from question texts
-- Answer mapping across all contacts
-- UTF-8 BOM encoding for proper character display
-
-## State Synchronization Patterns
-
-### Automatic Persistence
-Every state change triggers localStorage update to ensure data integrity across browser sessions.
-
-### Progressive Enhancement
-Application works offline once loaded, with no external API dependencies beyond initial CSV upload.
-
-### Error Boundaries
-Graceful handling of:
-- Invalid CSV formats
-- Missing audio files  
-- Corrupted localStorage data
-- Network connectivity issues
-
-## Performance Considerations
-
-### Memory Management
-- Single contact loaded in UI at a time
-- Lazy loading of audio files
-- Minimal DOM updates through React's diffing
-
-### Storage Optimization  
-- JSON serialization for localStorage
-- Efficient answer indexing by contact_id
-- Progress state compression 
+## Technical Constraints & Guardrails
+- **Daily Limit**: Enforced in the UI and can be backed by database constraints.
+- **Audio Streaming**: Direct S3 playback via HTML5 API.
+- **Responsive Layout**: Specialized optimizations for 13" - 16" laptop screens used by auditors.

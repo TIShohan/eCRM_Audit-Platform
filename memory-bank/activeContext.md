@@ -1,47 +1,43 @@
 # Active Context: eCRM Audit Platform v2.0
 
 ## Current Work Focus
-
-### Phase 5: Data Management (In Progress)
-**Objective**: Transition from client-side CSV processing to database-driven data management.
+**Status**: 🚀 Production Ready & Deployed
+The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
-- **Database Schema**: Added `start_time`, `end_time`, `duration`, and `outlet_name` to `audit_data` table for parity with v1 CSV data.
-- **Data Management (v2.0)**: Implemented `DataManagement.jsx` with CSV parsing (PapaParse) and batch database insertion into `audit_data`.
-- **Admin Dashboard**: Completed User Management (listing, creating, editing, and metrics).
-- **Routing**: Integrated Data Management and Auditor Dashboard placeholder routes in `App.jsx`.
+- **Phase 11: High-Scale Optimization**: Fully implemented the "Global Queue" pull model, removing manual assignment bottlenecks.
+- **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
+- **Auditor Dashboard**: Added "Completed This Month" tracking with custom "5th-day reset" logic to match business reporting cycles.
+- **Metrics**: Integrated real-time counting of Available, Claimed, and Completed records in the Admin view.
+- **Security**: Hardened Row Level Security (RLS) policies to support the self-service claiming mechanism.
 
 ## Current Objectives
-- **Phase 5: Data Management**:
-    - [x] Task 5.1 & 5.2: CSV Upload and Import logic (Completed).
-    - [ ] Task 5.3: Create Data List view to browse and filter uploaded records.
-    - [ ] Task 5.4: Implement Manual/Auto Assignment of data to auditors.
+- [x] All core v2.0 phases completed.
+- [ ] Monitor production performance with 100k+ records.
+- [ ] Gather user feedback for potential v2.1 reporting enhancements.
 
 ## Project Progress
 
-### Phase 4: Admin Dashboard - User Management
-- ✅ Created `AdminLayout.jsx` with sidebar navigation and logout functionality.
-- ✅ Created `Dashboard.jsx` with overview stats (Users, Data, Completion).
-- ✅ Created `UserManagement.jsx` page for listing and managing auditors.
-- ✅ Created `UserForm.jsx` modal for auditor creation/editing (via Supabase Auth).
-- ✅ Enhanced `UserManagement.jsx` to fetch real-time metrics (Assigned/Completed) per auditor.
+### Phase 11: High-Scale & Self-Service Optimization
+- ✅ Implemented Global Queue (Pull Model) for auditors.
+- ✅ Created `daily_inventory_summary` PostgreSQL view.
+- ✅ Developed Daily Summary Dashboard for admins.
+- ✅ Implemented business-specific monthly reset logic (5th of the month).
 
-### Phase 3: Authentication & Routing
-- ✅ Implemented `AuthContext.jsx` using Supabase Auth.
-- ✅ Created `Login.jsx` with automatic role-based redirection.
-- ✅ Created `ProtectedRoute.jsx` for enforcing role access (Admin/Auditor).
-- ✅ Set up React Router with nested routes for Admin and Auditor dashboards.
-
-### Phase 2: Database Schema
-- ✅ Designed and implemented base tables: `user_profiles`, `audit_data`, `questions`, `answer_options`, `audit_responses`, `assignments`.
-- ✅ Configured Row Level Security (RLS) policies for all tables.
+### Phase 1-10: Foundation & Transformation
+- ✅ Migrated from local v1 tools to Supabase Cloud architecture.
+- ✅ Implemented Role-Based Access Control (Admin/Auditor).
+- ✅ Built dynamic Question Management system.
+- ✅ Developed robust CSV ingestion with full metadata retention.
+- ✅ Polished UI/UX for professional audit workflows.
 
 ## Current System State
-- **Auth**: Functional login/logout with role persistence.
-- **Admin**: Dashboard stats, full User Management, and new CSV Data Upload interface.
-- **Auditor**: Routing to placeholder dashboard (Phase 8 will migrate v1 UI here).
+- **Infrastructure**: Supabase (PostgreSQL + Auth + Storage).
+- **Backend Logic**: Database-driven queue with "claiming" locks via RLS and Updates.
+- **Admin UI**: High-level inventory monitoring and User/Question management.
+- **Auditor UI**: Streamlined focus on daily targets and seamless "Complete & Next" workflow.
 
-## Next Steps & Priorities
-1. Build `src/pages/admin/DataList.jsx` to browse/filter uploaded records.
-2. Implement Assignment logic (Manual/Auto).
-3. Phase 6: Question Management.
+## Next Steps
+1. Performance benchmarking for extremely large CSV imports.
+2. Exploratory work for mobile-optimized auditor view (if requested).
+3. Advanced analytics for auditor error rates.
