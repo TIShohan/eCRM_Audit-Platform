@@ -20,7 +20,7 @@ function MapPreview({ lat, lng }) {
   const position = [lat, lng];
 
   return (
-    <MapContainer center={position} zoom={13} scrollWheelZoom={false} zoomControl={true} dragging={false} doubleClickZoom={false} boxZoom={false} keyboard={false} tap={false} touchZoom={false} style={{ height: '300px', width: '100%' }}>
+    <MapContainer center={position} zoom={13} scrollWheelZoom={false} zoomControl={true} dragging={false} doubleClickZoom={false} boxZoom={false} keyboard={false} tap={false} touchZoom={false} style={{ height: '100%', width: '100%' }}>
       <TileLayer
         attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

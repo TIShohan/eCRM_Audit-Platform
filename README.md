@@ -1,192 +1,81 @@
-# eCRM Audio Portal
+# eCRM Audit Platform v2.0
 
-An internal quality assurance tool for reviewing and auditing audio recordings from eCRM (Electronic Customer Relationship Management) campaigns. This React-based web application enables QA teams to systematically review recorded conversations between Research Associates (RAs) and customers.
+A professional, multi-user quality assurance platform for auditing eCRM campaign audio recordings. Built with React and powered by Supabase.
 
-## 🎯 Purpose
+## 🎯 project Overview
 
-The eCRM Audio Portal streamlines the audio review process by providing:
-- **Structured Quality Assessment**: Standardized questions for consistent evaluation
-- **Enhanced Audio Controls**: Variable playback speed, skip controls, and progress tracking  
-- **Progress Management**: Automatic saving and restoration of review progress
-- **Comprehensive Reporting**: Export detailed CSV reports of all reviews
-- **Location Visualization**: Interactive maps showing contact locations
+The eCRM Audit Platform v2.0 transforms the manual CSV-based auditing process into a structured, database-driven workflow. It provides administrators with full control over user management, data assignment, and dynamic question configuration, while offering auditors a streamlined, focused environment for audio review.
 
-## ✨ Features
+## ✨ Key Features
 
-### Core Functionality
-- **CSV Data Import**: Upload contact and campaign data with audio links
-- **Audio Player**: HTML5 audio with enhanced controls (1x, 1.25x, 1.5x playback speeds)
-- **Question System**: 
-  - Common questions for all contacts (Bengali language)
-  - Campaign-specific questions based on campaign ID
-- **Progress Tracking**: Automatic localStorage persistence across browser sessions
-- **Interactive Maps**: Leaflet integration for contact location visualization
-- **CSV Export**: Generate comprehensive reports with UTF-8 encoding
-- **Data Validation**: Answer completion validation before navigation
-- **Reset Functionality**: Two-step confirmation for data clearing
+### 🔐 Authentication & Roles
+- **Secure Login**: Individual email/password accounts via Supabase Auth.
+- **Admin Role**: Full system control (Users, Data, Questions, Reports).
+- **Auditor Role**: Focused queue-based workflow with daily limits.
 
-### User Interface
-- Clean, focused design for efficient audio review
-- Sequential navigation through contacts
-- Real-time progress indicators
-- Visual feedback for selected answers
-- Responsive layout optimized for desktop use
+### 👩‍💼 Admin Management
+- **User Control**: Create/manage auditors and set daily performance limits.
+- **Data Ingestion**: High-speed CSV upload with full metadata retention (19+ columns).
+- **Intelligent Assignment**: 
+  - Manual assignment for specific cases.
+  - 🤖 **Auto-Assign**: Round-robin distribution of records to auditors.
+- **Dynamic Questions**: Configure common or campaign-specific surveys without code changes.
 
-## 🚀 Quick Start
+### 🎧 Auditor Workflow
+- **Automated Queue**: Fetches the next pending assignment instantly.
+- **Enhanced Player**: Variable speed (1x-2x), keyboard shortcuts, and progress tracking.
+- **Visual Context**: Interactive Leaflet maps showing GPS coordinates of the contact.
+- **Daily Limits**: Real-time enforcement of work limits to prevent over-auditing.
 
-### Prerequisites
-- Node.js 18+ (for ES modules support)
-- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+)
-
-### Installation
-```bash
-# Clone the repository
-git clone <repository-url>
-cd ecrm_audio_portal
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-The application will be available at `http://localhost:5173`
-
-### Production Build
-```bash
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 📋 Usage
-
-### 1. Data Upload
-1. Prepare a CSV file with the following required columns:
-   - `Contact_id`: Unique contact identifier
-   - `audio_links`: URL to MP3 audio files (typically AWS S3)
-   - `campaign_id`: Numeric campaign identifier
-   - `campaign`: Campaign name/description
-   - `Contact_Location`: Comma-separated latitude,longitude coordinates
-
-2. Click "Choose File" and select your CSV file
-3. Wait for successful upload confirmation
-
-### 2. Audio Review Process
-1. Navigate through contacts using Previous/Next buttons
-2. Listen to audio recordings using the enhanced player controls
-3. Review contact details and location information
-4. Answer all required questions:
-   - **Common Questions**: Applied to every contact
-   - **Campaign Questions**: Specific to the current campaign
-5. Complete all questions before proceeding to the next contact
-
-### 3. Export Results
-1. Click "Download Review Answers CSV" to export all responses
-2. The generated CSV will include:
-   - Contact information
-   - All question texts as column headers
-   - Reviewer responses for each contact
-
-### 4. Session Management
-- Progress is automatically saved in your browser
-- Resume reviews after closing/reopening the browser
-- Use "Reset App" to clear all data and start fresh
+### 📊 Reporting
+- **Custom Export**: Filter completed audits by date range.
+- **Deep Joins**: Generates a flattened CSV where every survey question is a column.
+- **Full Parity**: Preserves all original CSV columns alongside auditor responses.
 
 ## 🛠 Technology Stack
 
-- **React 19.1.0**: Modern React with hooks and concurrent features
-- **Vite 7.0.4**: Fast build tool and development server
-- **PapaParse 5.5.3**: Robust CSV parsing and generation
-- **Leaflet 1.9.4 + React-Leaflet 5.0.0**: Interactive mapping
-- **HTML5 Audio API**: Native browser audio support
-- **LocalStorage**: Client-side data persistence
+- **React 19**: Modern UI framework.
+- **Supabase**: PostgreSQL database, Auth, and Row Level Security (RLS).
+- **Vite**: Ultra-fast build tool.
+- **Leaflet**: Geospatial mapping.
+- **PapaParse**: CSV processing.
 
-## 📁 Project Structure
+## 🚀 Quick Start
 
-```
-ecrm_audio_portal/
-├── memory-bank/              # Project documentation system
-│   ├── projectbrief.md       # Project scope and requirements
-│   ├── productContext.md     # Business context and goals
-│   ├── systemPatterns.md     # Architecture and design patterns
-│   ├── techContext.md        # Technology stack and setup
-│   ├── activeContext.md      # Current work focus and state
-│   └── progress.md           # Implementation status
-├── src/
-│   ├── App.jsx               # Main application component
-│   ├── App.css               # Global styles
-│   ├── main.jsx              # React root mounting
-│   ├── index.css             # Base CSS styles
-│   ├── commonQuestions.json  # Universal questions configuration
-│   ├── FixedQuestions.json   # Campaign-specific questions
-│   └── components/
-│       ├── DownloadCSVButton.jsx
-│       ├── MapPreview.jsx
-│       ├── ConfirmationModal.jsx
-│       └── ConfirmationModal.css
-├── public/                   # Static assets
-├── package.json              # Dependencies and scripts
-└── vite.config.js           # Vite configuration
-```
+### 1. Prerequisites
+- Node.js 18+
+- Supabase Project (URL & Anon Key)
 
-## 🔧 Configuration
-
-### Question Management
-Questions are configured through JSON files in the `src/` directory:
-
-- **`commonQuestions.json`**: Questions applied to all contacts
-- **`FixedQuestions.json`**: Campaign-specific questions mapped by campaign_id
-
-### Audio Requirements
-- **Format**: MP3 files compatible with HTML5 Audio
-- **Hosting**: AWS S3 URLs with appropriate CORS configuration
-- **Duration**: Typically 2-15 minutes per recording
-
-## 🚀 Deployment
-
-The application builds to a static site suitable for hosting on:
-- Netlify
-- Vercel  
-- AWS S3 + CloudFront
-- Any static file hosting service
-
+### 2. Setup
 ```bash
-npm run build
-# Deploy contents of dist/ folder
+# Clone and install
+git clone <repo-url>
+cd ecrm_audio_portal
+npm install
+
+# Configure environment
+# Create a .env file with:
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-## 📝 Development Scripts
-
+### 3. Development
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run preview  # Preview production build locally
-npm run lint     # Run ESLint checks
+npm run dev
 ```
 
-## 🎯 Key Features for QA Teams
+## 📋 Database Schema
 
-- **Consistency**: Standardized questions ensure uniform evaluation criteria
-- **Efficiency**: Enhanced audio controls and progress tracking speed up reviews
-- **Reliability**: Automatic progress saving prevents data loss
-- **Reporting**: Comprehensive CSV exports for management reporting
-- **Offline Capable**: Works without internet after initial data upload
+The platform uses a relational PostgreSQL schema:
+- `user_profiles`: Roles, limits, and email synchronization.
+- `audit_data`: Central storage for all contact records.
+- `questions` & `answer_options`: Dynamic survey engine.
+- `audit_responses`: Auditor answers with `upsert` protection.
+- `assignments`: Tracking for workload distribution.
 
-## 🔒 Privacy & Security
+## 🔒 Security
+- **Row Level Security (RLS)**: Ensures auditors can ONLY see data assigned to them.
+- **is_admin()**: Custom SQL function using `SECURITY DEFINER` for recursive-free role checking.
 
-- **No Authentication**: Designed for internal use without login requirements
-- **Client-Side Processing**: All data remains in the browser
-- **Local Storage**: No external databases or servers required
-- **Data Control**: Users maintain complete control over their data
-
-## 📞 Support
-
-This is an internal tool designed for eCRM quality assurance workflows. For questions about usage or configuration, refer to the documentation in the `memory-bank/` directory.
-
-## 📄 License
-
-Internal company tool - All rights reserved.
+---
+*Internal company tool - Quality Assurance Team*

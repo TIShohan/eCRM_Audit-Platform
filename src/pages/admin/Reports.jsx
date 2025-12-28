@@ -24,7 +24,7 @@ export default function Reports() {
                 .from('audit_data')
                 .select(`
           *,
-          auditor:user_profiles!audit_data_assigned_to_fkey(id),
+          auditor:user_profiles!audit_data_assigned_to_fkey(id, email),
           responses:audit_responses!audit_responses_audit_data_id_fkey(
             question_id,
             answer_option_id,
@@ -62,7 +62,7 @@ export default function Reports() {
                     'Campaign': record.campaign_name,
                     'Audio_Link': record.audio_link,
                     'Duration': record.duration,
-                    'Auditor': record.auditor?.id || 'Unassigned',
+                    'Auditor': record.auditor?.email || 'Unassigned',
                     'Completed_At': new Date(record.completed_at).toLocaleString()
                 }
 

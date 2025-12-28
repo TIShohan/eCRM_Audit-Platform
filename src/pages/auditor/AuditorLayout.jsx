@@ -15,44 +15,59 @@ export default function AuditorLayout() {
             {/* Header */}
             <header style={{
                 background: 'white',
-                padding: '15px 40px',
+                padding: '12px 20px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                 zIndex: 10
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#4f46e5' }}>eCRM Audit</h2>
-                    <nav style={{ display: 'flex', gap: '20px', marginLeft: '30px' }}>
+                    <div style={{ background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', padding: '8px 12px', borderRadius: '8px', color: 'white', fontWeight: '900', fontSize: '14px', letterSpacing: '1px' }}>
+                        eCRM
+                    </div>
+                    <nav style={{ display: 'flex', gap: '20px', marginLeft: '20px' }}>
                         <Link to="/auditor" style={navLinkStyle}>Dashboard</Link>
-                        {/* We don't link to the interface directly; the dashboard handles the entry */}
                     </nav>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    <span style={{ fontSize: '14px', color: '#718096' }}>{user?.email}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div style={{ textAlign: 'right', display: 'none' }} className="sidebar-text">
+                        <div style={{ fontSize: '12px', fontWeight: '700', color: '#1a202c' }}>Auditor Session</div>
+                        <div style={{ fontSize: '11px', color: '#718096' }}>{user?.email}</div>
+                    </div>
                     <button
                         onClick={handleLogout}
                         style={{
-                            padding: '6px 15px',
+                            padding: '8px 16px',
                             background: '#fff5f5',
                             color: '#c53030',
                             border: '1px solid #feb2b2',
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '600'
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#c53030'
+                            e.currentTarget.style.color = 'white'
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#fff5f5'
+                            e.currentTarget.style.color = '#c53030'
                         }}
                     >
-                        Sign Out
+                        Log Out
                     </button>
                 </div>
             </header>
 
             {/* Content Area */}
-            <main style={{ flex: 1, padding: '30px 40px' }}>
-                <Outlet />
+            <main className="content-padding fade-in" style={{ flex: 1, padding: '30px 40px' }}>
+                <div className="dashboard-container">
+                    <Outlet />
+                </div>
             </main>
         </div>
     )

@@ -18,7 +18,7 @@ export default function UserManagement() {
             // Fetch profiles
             const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
-                .select('id, role, daily_limit, created_at') // Temporarily removed email selection to prevent crash until SQL is run
+                .select('id, email, role, daily_limit, created_at')
                 .order('created_at', { ascending: false })
 
             if (profileError) throw profileError
@@ -107,7 +107,7 @@ export default function UserManagement() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
                         <tr style={{ background: '#f7fafc', borderBottom: '1px solid #edf2f7' }}>
-                            <th style={thStyle}>User ID</th>
+                            <th style={thStyle}>User Email</th>
                             <th style={thStyle}>Role</th>
                             <th style={thStyle}>Limit</th>
                             <th style={thStyle}>Assigned</th>
@@ -128,7 +128,7 @@ export default function UserManagement() {
                         ) : (
                             users.map((user) => (
                                 <tr key={user.id} style={{ borderBottom: '1px solid #edf2f7' }}>
-                                    <td style={tdStyle}>{user.id.substring(0, 8)}...</td>
+                                    <td style={tdStyle}>{user.email || 'No Email'}</td>
                                     <td style={tdStyle}>
                                         <span style={{
                                             padding: '4px 8px',

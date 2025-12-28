@@ -99,3 +99,30 @@ Tracks data assignment to auditors.
 - `auditor_id` (UUID, FK → user_profiles.id, NOT NULL)
 - `assigned_by` (UUID, FK → user_profiles.id, NOT NULL)
 - `assigned_at` (TIMESTAMP WITH TIME ZONE, DEFAULT: NOW())
+---
+
+## Helper Functions (Security)
+
+### 1. is_admin()
+Checks if the current authenticated user has the 'admin' role. Uses `SECURITY DEFINER` to bypass RLS recursion.
+
+```sql
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.user_profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+---
+
+## Row Level Security (RLS) Summary
+- **user_profiles**: Users see themselves; `is_admin()` users manage all.
+- **audit_data**: Auditors see/update assigned; `is_admin()` users manage all.
+- **questions/options**: Read-only for all; `is_admin()` users manage all.
+- **audit_responses**: Auditors manage own; `is_admin()` users view all.
+- **assignments**: Auditors see own; `is_admin()` users manage all.

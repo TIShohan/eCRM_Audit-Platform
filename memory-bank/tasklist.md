@@ -404,8 +404,6 @@ CREATE POLICY "Admins manage assignments"
 
 **Files**: `src/components/admin/UserForm.jsx`
 
-**Note**: Creating users requires Supabase service role key (backend function or Edge Function)
-
 ---
 
 ### Task 4.5: Implement User Metrics Display
@@ -544,12 +542,11 @@ CREATE POLICY "Admins manage assignments"
 
 ---
 
-## Phase 7: Admin Dashboard - Reporting
-
 ## Phase 7: Reporting (Done ✅)
 - [x] Create Reports Page (`src/pages/admin/Reports.jsx`)
 - [x] Implement Export Query with table joins
 - [x] Generate CSV with full metadata retention
+- [x] Fix database relationship joins for export (audit_data_id fkey)
 
 ---
 
@@ -561,29 +558,35 @@ CREATE POLICY "Admins manage assignments"
 - [x] Integrate Audio Controls & Map Preview
 - [x] Dynamic Database-driven Question Rendering
 - [x] Submit answers & update record status
+- [x] Fix "Complete & Next" transition logic
+- [x] Implement `upsert` for answers to prevent duplicate key errors
+- [x] Implement real-time Daily Limit enforcement inside Audit Room
 
 ---
 
 ## Phase 9: Final Polish & Verification
-**Goal**: Ensure production readiness and consistent look & feel.
+**Goal**: Ensure production readiness and consistent look & feel on target hardware.
 
-### Task 9.1: Responsive UI Audit
+### Task 9.1: Laptop View Optimizations (16:9 Screen)
 **Goal**: Fix any remaining layout issues on different screens
-- [ ] Test Admin and Auditor interfaces on Laptop (16:9) and Desktop
-- [ ] Fix any overflow or misalignment in tables
+- [x] Adjust container widths for 13" and 15" laptop screens
+- [x] Fix question column overlap on smaller widths
+- [x] Optimize Audio Player size for compact views
+- [x] Implement fade-in animations for premium feel
 
-### Task 9.2: Error Boundary & Loading States
+### Task 9.2: Data Integrity & Security Audit
 **Goal**: Prevent app crashes and show better feedback
-- [ ] Add Error Boundaries for Map and Audio Player
-- [ ] Improve loading spinners during data fetch
+- [x] Verify RLS Policies: Ensure Auditors cannot see other auditors' assigned data
+- [x] Test system with a "clean" Auditor account (no admin perms)
+- [x] Check for any "null pointer" errors in empty states
+- [x] Implement user-friendly email visibility in admin and reports (replaces raw UUIDs)
 
 ---
 
 ## Phase 10: Completion & Review
-- [ ] End-to-end testing of CSV Upload -> Auto-Assign -> Auditor Review -> Admin Report Export
-- [ ] Final Documentation update
+- [x] End-to-end testing of CSV Upload -> Auto-Assign -> Auditor Review -> Admin Report Export
+- [x] Final Documentation update
 
 ---
 
-**Summary**: The system is now fully functional. Admin can manage users, data, and questions. Auditors can review audio and location records. Reports can be exported as CSV.
-
+**Summary**: Core platform v2.0 is 100% functional. Currently optimizing UI for Auditor workflow on laptop screens.

@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import Papa from 'papaparse'
 import { supabase } from '../../lib/supabase'
+import ConfirmationModal from '../../components/ConfirmationModal'
 
 export default function DataManagement() {
     const [uploading, setUploading] = useState(false)
     const [results, setResults] = useState(null)
     const [error, setError] = useState(null)
+    const [cleaning, setCleaning] = useState(false)
+
+    // Modal state
+    const [modal, setModal] = useState({ show: false, message: '', type: '', step: 1 })
 
     const handleFileUpload = (e) => {
         const file = e.target.files[0]
@@ -21,7 +26,6 @@ export default function DataManagement() {
             complete: async (results) => {
                 try {
                     const rows = results.data.map(row => ({
-                        // Map every single column from the CSV
                         assigned_region: row['Assigned_Region'],
                         assigned_area: row['Assigned_Area'],
                         assigned_territory: row['Assigned_Territory'],
@@ -48,7 +52,6 @@ export default function DataManagement() {
                         throw new Error('No valid records found in CSV. Please check headers.')
                     }
 
-                    // Batch insert into Supabase
                     const { error: insertError } = await supabase
                         .from('audit_data')
                         .insert(rows)
@@ -74,8 +77,44 @@ export default function DataManagement() {
         })
     }
 
+    const startCleanup = (type) => {
+        const message = type === 'all'
+            ? 'Are you sure you want to PERMANENTLY delete ALL local records and their responses? This cannot be undone.'
+            : 'Are you sure you want to delete only COMPLETED records? This will free up space while keeping pending work.';
+
+        setModal({ show: true, message, type, step: 1 })
+    }
+
+    const handleCleanupConfirm = async () => {
+        if (modal.step === 1) {
+            setModal({ ...modal, step: 2, message: 'FINAL WARNING: This action is destructive. Are you absolutely certain?' })
+            return
+        }
+
+        try {
+            setCleaning(true)
+            let query = supabase.from('audit_data').delete()
+
+            if (modal.type === 'completed') {
+                query = query.eq('status', 'completed')
+            } else {
+                query = query.neq('id', '00000000-0000-0000-0000-000000000000') // Trick to delete all
+            }
+
+            const { error: delError } = await query
+            if (delError) throw delError
+
+            alert(`Successfully deleted ${modal.type === 'completed' ? 'completed' : 'all'} records.`)
+            setModal({ show: false, message: '', type: '', step: 1 })
+        } catch (err) {
+            alert('Cleanup failed: ' + err.message)
+        } finally {
+            setCleaning(false)
+        }
+    }
+
     return (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '60px' }}>
             <div style={{ width: '100%', maxWidth: '1000px' }}>
                 <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '30px' }}>
                     Data Management
@@ -87,7 +126,8 @@ export default function DataManagement() {
                     borderRadius: '12px',
                     boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
                     textAlign: 'center',
-                    border: '2px dashed #e2e8f0'
+                    border: '2px dashed #e2e8f0',
+                    marginBottom: '40px'
                 }}>
                     <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>Full CSV Import</h2>
                     <p style={{ color: '#718096', marginBottom: '30px' }}>
@@ -101,16 +141,7 @@ export default function DataManagement() {
                             onChange={handleFileUpload}
                             disabled={uploading}
                             id="csv-upload"
-                            style={{
-                                position: 'absolute',
-                                width: '1px',
-                                height: '1px',
-                                padding: '0',
-                                margin: '-1px',
-                                overflow: 'hidden',
-                                clip: 'rect(0,0,0,0)',
-                                border: '0'
-                            }}
+                            style={{ position: 'absolute', width: '1px', height: '1px', opacity: 0 }}
                         />
                         <label
                             htmlFor="csv-upload"
@@ -137,27 +168,71 @@ export default function DataManagement() {
                     )}
 
                     {results && (
-                        <div style={{
-                            marginTop: '30px',
-                            padding: '20px',
-                            background: '#f0fff4',
-                            border: '1px solid #c6f6d5',
-                            borderRadius: '8px',
-                            color: '#2f855a'
-                        }}>
+                        <div style={{ marginTop: '30px', padding: '20px', background: '#f0fff4', border: '1px solid #c6f6d5', borderRadius: '8px', color: '#2f855a' }}>
                             <h3 style={{ marginBottom: '10px', fontWeight: '700' }}>Upload Successful</h3>
                             <p>{results.message}</p>
-                            <p style={{ fontSize: '13px', opacity: 0.8 }}>
-                                Preserved all metadata for {results.valid} records.
-                            </p>
                         </div>
                     )}
                 </div>
 
+                {/* Cleanup Tools Section */}
+                <div style={{
+                    background: '#fff5f5',
+                    padding: '30px',
+                    borderRadius: '12px',
+                    border: '1px solid #feb2b2'
+                }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#c53030', marginBottom: '10px' }}>⚠️ Danger Zone: Database Cleanup</h2>
+                    <p style={{ color: '#718096', fontSize: '14px', marginBottom: '20px' }}>
+                        Use these tools to manage database size. Deleting records will also remove all associated auditor responses.
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <button
+                            onClick={() => startCleanup('completed')}
+                            disabled={cleaning}
+                            style={{
+                                padding: '10px 20px',
+                                background: 'white',
+                                color: '#c53030',
+                                border: '1px solid #feb2b2',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Delete Completed Records
+                        </button>
+                        <button
+                            onClick={() => startCleanup('all')}
+                            disabled={cleaning}
+                            style={{
+                                padding: '10px 20px',
+                                background: '#c53030',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {cleaning ? 'Cleaning...' : 'Purge All Database Records'}
+                        </button>
+                    </div>
+                </div>
+
+                <ConfirmationModal
+                    isVisible={modal.show}
+                    message={modal.message}
+                    modalStep={modal.step}
+                    onConfirm={handleCleanupConfirm}
+                    onCancel={() => setModal({ show: false, message: '', type: '', step: 1 })}
+                />
+
                 <div style={{ marginTop: '40px', background: '#edf2f7', padding: '20px', borderRadius: '10px' }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px' }}>Data Integrity Note</h3>
+                    <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px' }}>Data Lifecycle Management</h3>
                     <p style={{ fontSize: '14px', color: '#4a5568' }}>
-                        This system now implements <strong>Full Column Retention</strong>. Every header in your CSV is saved to provide a complete traceability report upon audit completion.
+                        It is recommended to <strong>Export Reports</strong> before purging records. Once deleted, auditor findings cannot be recovered.
                     </p>
                 </div>
             </div>

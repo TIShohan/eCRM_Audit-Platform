@@ -12,10 +12,19 @@ export default function DataList() {
     const [selectingFor, setSelectingFor] = useState(null)
     const [assigning, setAssigning] = useState(false)
 
+    const [page, setPage] = useState(1)
+    const [pageSize] = useState(50)
+    const [hasMore, setHasMore] = useState(true)
+
+    const [searchCampaign, setSearchCampaign] = useState('')
+
     useEffect(() => {
-        fetchData()
+        const handler = setTimeout(() => {
+            fetchData()
+        }, 400) // Debounce for search
         fetchAuditors()
-    }, [filter])
+        return () => clearTimeout(handler)
+    }, [filter, page, searchCampaign])
 
     async function fetchAuditors() {
         const { data } = await supabase.from('user_profiles').select('*').eq('role', 'auditor')
@@ -25,32 +34,37 @@ export default function DataList() {
     async function fetchData() {
         try {
             setLoading(true)
+
+            // 1. Fetch Global Stats
+            const { count: totalCount } = await supabase.from('audit_data').select('*', { count: 'exact', head: true })
+            const { count: pendingCount } = await supabase.from('audit_data').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+            const { count: completedCount } = await supabase.from('audit_data').select('*', { count: 'exact', head: true }).eq('status', 'completed')
+
+            setStats({ total: totalCount, pending: pendingCount, completed: completedCount })
+
+            // 2. Fetch Paginated Records with Filters
             let query = supabase
                 .from('audit_data')
                 .select(`
-          *,
-          assigned_user:user_profiles!audit_data_assigned_to_fkey(id)
-        `)
+                  *,
+                  assigned_user:user_profiles!audit_data_assigned_to_fkey(id, email)
+                `)
                 .order('created_at', { ascending: false })
+                .range((page - 1) * pageSize, page * pageSize - 1)
 
             if (filter !== 'all') {
                 query = query.eq('status', filter)
             }
 
-            const { data: records, error } = await query
+            if (searchCampaign) {
+                query = query.ilike('campaign_id', `%${searchCampaign}%`)
+            }
 
+            const { data: records, error } = await query
             if (error) throw error
 
             setData(records || [])
-
-            // Calculate mini-stats from results (could move to separate query for accuracy if paginated)
-            const counts = records.reduce((acc, curr) => {
-                acc.total++
-                if (curr.status === 'pending') acc.pending++
-                if (curr.status === 'completed') acc.completed++
-                return acc
-            }, { total: 0, pending: 0, completed: 0 })
-            setStats(counts)
+            setHasMore(records.length === pageSize)
 
         } catch (err) {
             console.error('Error fetching data:', err)
@@ -153,7 +167,10 @@ export default function DataList() {
                 <span style={{ fontSize: '14px', fontWeight: '600', color: '#4a5568' }}>Filter Status:</span>
                 <select
                     value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
+                    onChange={(e) => {
+                        setFilter(e.target.value)
+                        setPage(1)
+                    }}
                     style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #e2e8f0', background: 'white' }}
                 >
                     <option value="all">All Records</option>
@@ -161,6 +178,17 @@ export default function DataList() {
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                 </select>
+
+                <input
+                    type="text"
+                    placeholder="Search Campaign ID..."
+                    onChange={(e) => {
+                        // We'll update the fetch logic to handle this
+                        setSearchCampaign(e.target.value)
+                        setPage(1)
+                    }}
+                    style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #e2e8f0', width: '180px' }}
+                />
 
                 <button
                     onClick={handleAutoAssign}
@@ -231,8 +259,8 @@ export default function DataList() {
                                     </span>
                                 </td>
                                 <td style={tdStyle}>
-                                    {record.assigned_to ? (
-                                        <span style={{ fontSize: '14px', color: '#4a5568' }}>UUID: ..{record.assigned_to.slice(-6)}</span>
+                                    {record.assigned_user ? (
+                                        <span style={{ fontSize: '14px', color: '#4a5568' }}>{record.assigned_user.email || 'Email missing'}</span>
                                     ) : (
                                         <span style={{ color: '#e53e3e', fontSize: '12px' }}>Unassigned</span>
                                     )}
@@ -260,6 +288,37 @@ export default function DataList() {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '30px' }}>
+                <button
+                    disabled={page === 1}
+                    onClick={() => setPage(p => p - 1)}
+                    style={{
+                        padding: '8px 16px',
+                        background: page === 1 ? '#e2e8f0' : 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        cursor: page === 1 ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    Previous
+                </button>
+                <span style={{ fontSize: '14px', fontWeight: '600' }}>Page {page}</span>
+                <button
+                    disabled={!hasMore}
+                    onClick={() => setPage(p => p + 1)}
+                    style={{
+                        padding: '8px 16px',
+                        background: !hasMore ? '#e2e8f0' : 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        cursor: !hasMore ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    Next
+                </button>
             </div>
 
             {/* Assignment Modal */}
