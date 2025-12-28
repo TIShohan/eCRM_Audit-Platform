@@ -189,7 +189,14 @@ export default function AuditorDashboard() {
 
 function MetricCard({ label, value, limit, icon, color = '#4f46e5' }) {
     return (
-        <div style={{ background: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.04)', borderTop: `4px solid ${color}` }}>
+        <div className="card" style={{
+            background: 'white',
+            padding: '24px',
+            borderRadius: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
+            borderTop: `4px solid ${color}`,
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                     <p style={{ fontSize: '13px', color: '#718096', fontWeight: '600', marginBottom: '5px' }}>{label}</p>

@@ -171,7 +171,8 @@ function SmallStatCard({ label, value, color, icon }) {
             border: `1px solid #f1f5f9`,
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '16px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
             <div style={{
                 width: '40px',

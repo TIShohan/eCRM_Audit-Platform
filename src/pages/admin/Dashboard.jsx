@@ -91,7 +91,7 @@ export default function Dashboard() {
 
 function StatCard({ label, value, icon, color }) {
     return (
-        <div style={{
+        <div className="card" style={{
             background: 'white',
             padding: '24px',
             borderRadius: '20px',
@@ -99,7 +99,8 @@ function StatCard({ label, value, icon, color }) {
             border: `1px solid #f1f5f9`,
             display: 'flex',
             alignItems: 'center',
-            gap: '20px'
+            gap: '20px',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
             <div style={{
                 width: '52px',
