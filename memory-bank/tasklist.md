@@ -46,6 +46,12 @@ High-performance transformation of the client-side CSV tool into a scalable, mul
 - [x] Update User Form to collect comprehensive contact info
 - [x] Sync existing emails from Auth to Profiles via SQL script
 
+### Task 11.4: Soft-Delete Archiving
+- [x] Add `is_archived` column to `audit_data` table
+- [x] Implement "Archive Completed" feature in Data Management
+- [x] Ensure all dashboard and query logic respects `is_archived = false` filter
+- [x] Update `daily_inventory_summary` view to exclude archived records
+
 ### Task 11.5: Performance Metrics & Reset Logic
 - [x] Implement "Completed This Month" auditor metric
 - [x] Design custom reset cycle (Resets on 5th day of following month)

@@ -9,6 +9,8 @@ The platform is currently in maintenance mode with all core v2.0 features implem
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
 - **Auditor Dashboard**: Added "Completed This Month" tracking with custom "5th-day reset" logic to match business reporting cycles.
 - **Metrics**: Integrated real-time counting of Available, Claimed, and Completed records in the Admin view.
+- **Admin Dashboard**: Fixed Inventory Summary to group by **Record Date** (from CSV) instead of System Upload Date for better inventory tracking.
+- **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards while maintaining database referential integrity.
 - **Security**: Hardened Row Level Security (RLS) policies to support the self-service claiming mechanism.
 
 ## Current Objectives
@@ -23,6 +25,7 @@ The platform is currently in maintenance mode with all core v2.0 features implem
 - ✅ Created `daily_inventory_summary` PostgreSQL view.
 - ✅ Developed Daily Summary Dashboard for admins.
 - ✅ Implemented business-specific monthly reset logic (5th of the month).
+- ✅ Implemented Soft-Delete Archiving for completed records.
 
 ### Phase 1-10: Foundation & Transformation
 - ✅ Migrated from local v1 tools to Supabase Cloud architecture.

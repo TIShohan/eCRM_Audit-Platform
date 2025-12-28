@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import UserForm from '../../components/admin/UserForm'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
 
 export default function UserManagement() {
     const [users, setUsers] = useState([])
@@ -15,15 +16,13 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         try {
             setLoading(true)
-            // Fetch profiles
             const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
-                .select('id, email, full_name, mobile_number, role, daily_limit, created_at')
+                .select('id, email, full_name, mobile_number, role, daily_limit, is_active, created_at')
                 .order('created_at', { ascending: false })
 
             if (profileError) throw profileError
 
-            // Fetch metrics for each auditor
             const usersWithMetrics = await Promise.all(profiles.map(async (profile) => {
                 if (profile.role === 'admin') return { ...profile, assigned: '-', completed: '-' }
 
@@ -55,6 +54,21 @@ export default function UserManagement() {
         }
     }
 
+    const handleToggleStatus = async (user) => {
+        try {
+            const { error } = await supabase
+                .from('user_profiles')
+                .update({ is_active: !user.is_active })
+                .eq('id', user.id)
+
+            if (error) throw error
+            fetchUsers()
+        } catch (error) {
+            console.error('Error toggling status:', error)
+            alert('Failed to update status')
+        }
+    }
+
     const handleOpenForm = (user = null) => {
         setEditingUser(user)
         setIsFormOpen(true)
@@ -71,26 +85,30 @@ export default function UserManagement() {
     }
 
     return (
-        <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-                    User Management
-                </h1>
-                <button
-                    style={{
-                        padding: '10px 20px',
-                        background: '#667eea',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }}
-                    onClick={() => handleOpenForm()}
-                >
-                    + Create User
-                </button>
-            </div>
+        <div className="fade-in">
+            <AdminPageHeader
+                title="Auditor Network"
+                subtitle="Manage access, quotas, and track individual performance metrics."
+                action={
+                    <button
+                        className="interactive-btn"
+                        style={{
+                            padding: '12px 24px',
+                            background: '#4f46e5',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontWeight: '700',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
+                        }}
+                        onClick={() => handleOpenForm()}
+                    >
+                        ＋ Create New User
+                    </button>
+                }
+            />
 
             {isFormOpen && (
                 <UserForm
@@ -102,62 +120,96 @@ export default function UserManagement() {
 
             <div style={{
                 background: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                overflow: 'hidden'
+                borderRadius: '16px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0'
             }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                     <thead>
-                        <tr style={{ background: '#f7fafc', borderBottom: '1px solid #edf2f7' }}>
-                            <th style={thStyle}>Full Name</th>
-                            <th style={thStyle}>Mobile</th>
-                            <th style={thStyle}>Email</th>
-                            <th style={thStyle}>Role</th>
-                            <th style={thStyle}>Limit</th>
-                            <th style={thStyle}>Assigned</th>
-                            <th style={thStyle}>Completed</th>
-                            <th style={thStyle}>Created At</th>
+                        <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                            <th style={thStyle}>Identity</th>
+                            <th style={thStyle}>Contact</th>
+                            <th style={thStyle}>Access Role</th>
+                            <th style={thStyle}>Daily Quota</th>
+                            <th style={thStyle}>Status</th>
+                            <th style={thStyle}>Claimed</th>
+                            <th style={thStyle}>Done</th>
                             <th style={thStyle}>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan="9" style={{ padding: '20px', textAlign: 'center' }}>Loading users...</td>
+                                <td colSpan="8" style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>Fetching auditor profiles...</td>
                             </tr>
                         ) : users.length === 0 ? (
                             <tr>
-                                <td colSpan="9" style={{ padding: '20px', textAlign: 'center' }}>No users found.</td>
+                                <td colSpan="8" style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>No users registered.</td>
                             </tr>
                         ) : (
                             users.map((user) => (
-                                <tr key={user.id} style={{ borderBottom: '1px solid #edf2f7' }}>
-                                    <td style={tdStyle}>{user.full_name || 'N/A'}</td>
+                                <tr key={user.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
+                                    <td style={tdStyle}>
+                                        <div style={{ fontWeight: '700', color: '#0f172a' }}>{user.full_name || 'N/A'}</div>
+                                        <div style={{ fontSize: '12px', color: '#64748b' }}>{user.email}</div>
+                                    </td>
                                     <td style={tdStyle}>{user.mobile_number || 'N/A'}</td>
-                                    <td style={tdStyle}>{user.email || 'No Email'}</td>
                                     <td style={tdStyle}>
                                         <span style={{
-                                            padding: '4px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '12px',
-                                            fontWeight: '600',
+                                            padding: '4px 10px',
+                                            borderRadius: '20px',
+                                            fontSize: '11px',
+                                            fontWeight: '800',
                                             textTransform: 'uppercase',
-                                            background: user.role === 'admin' ? '#e9d8fd' : '#bee3f8',
-                                            color: user.role === 'admin' ? '#553c9a' : '#2b6cb0'
+                                            letterSpacing: '0.05em',
+                                            background: user.role === 'admin' ? '#f5f3ff' : '#eff6ff',
+                                            color: user.role === 'admin' ? '#7c3aed' : '#3b82f6',
+                                            border: `1px solid ${user.role === 'admin' ? '#ddd6fe' : '#dbeafe'}`
                                         }}>
                                             {user.role}
                                         </span>
                                     </td>
-                                    <td style={tdStyle}>{user.daily_limit}</td>
-                                    <td style={tdStyle}>{user.assigned}</td>
-                                    <td style={tdStyle}>{user.completed}</td>
-                                    <td style={tdStyle}>{new Date(user.created_at).toLocaleDateString()}</td>
+                                    <td style={{ ...tdStyle, fontWeight: '700' }}>{user.daily_limit}</td>
                                     <td style={tdStyle}>
                                         <button
-                                            style={{ color: '#667eea', border: 'none', background: 'none', cursor: 'pointer', fontWeight: '600' }}
+                                            onClick={() => handleToggleStatus(user)}
+                                            style={{
+                                                padding: '4px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '10px',
+                                                fontWeight: '900',
+                                                textTransform: 'uppercase',
+                                                cursor: 'pointer',
+                                                border: '1px solid',
+                                                background: user.is_active !== false ? '#ecfdf5' : '#fef2f2',
+                                                color: user.is_active !== false ? '#10b981' : '#ef4444',
+                                                borderColor: user.is_active !== false ? '#10b981' : '#ef4444',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            className="interactive-btn"
+                                        >
+                                            {user.is_active !== false ? '● Active' : '○ Inactive'}
+                                        </button>
+                                    </td>
+                                    <td style={tdStyle}>{user.assigned}</td>
+                                    <td style={{ ...tdStyle, color: '#10b981', fontWeight: '700' }}>{user.completed}</td>
+                                    <td style={tdStyle}>
+                                        <button
+                                            className="interactive-btn"
+                                            style={{
+                                                color: '#4f46e5',
+                                                border: '1px solid #e2e8f0',
+                                                background: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: '700',
+                                                fontSize: '12px'
+                                            }}
                                             onClick={() => handleOpenForm(user)}
                                         >
-                                            Edit
+                                            Modify
                                         </button>
                                     </td>
                                 </tr>
@@ -171,14 +223,17 @@ export default function UserManagement() {
 }
 
 const thStyle = {
-    padding: '12px 20px',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#4a5568'
+    padding: '16px 20px',
+    fontSize: '12px',
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
 }
 
 const tdStyle = {
-    padding: '12px 20px',
+    padding: '16px 20px',
     fontSize: '14px',
-    color: '#1a202c'
+    color: '#334155',
+    verticalAlign: 'middle'
 }

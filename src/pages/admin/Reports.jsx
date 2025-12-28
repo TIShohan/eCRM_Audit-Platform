@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Papa from 'papaparse'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
 
 export default function Reports() {
     const [startDate, setStartDate] = useState('')
@@ -16,10 +17,9 @@ export default function Reports() {
 
         try {
             setExporting(true)
-            setMessage({ text: 'Generating report...', type: 'info' })
+            setMessage({ text: 'Compiling large dataset and flattening responses...', type: 'info' })
 
             // 1. Fetch completed audit data within range
-            // We join audit_data with audit_responses, questions, and answer_options
             const { data, error } = await supabase
                 .from('audit_data')
                 .select(`
@@ -39,12 +39,11 @@ export default function Reports() {
             if (error) throw error
 
             if (!data || data.length === 0) {
-                setMessage({ text: 'No completed audits found for this date range.', type: 'error' })
+                setMessage({ text: 'Zero results found for the selected timeline. Adjust dates and try again.', type: 'error' })
                 return
             }
 
             // 2. Format data for CSV
-            // We need to flatten the responses into columns
             const formattedData = data.map(record => {
                 const row = {
                     'Contact_id': record.contact_id,
@@ -78,103 +77,144 @@ export default function Reports() {
             // 3. Convert to CSV using PapaParse
             const csv = Papa.unparse(formattedData)
 
-            // 4. Trigger download with BOM for Excel/UTF-8 support
+            // 4. Trigger download
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
             const link = document.createElement('a')
             const url = URL.createObjectURL(blob)
             link.setAttribute('href', url)
-            link.setAttribute('download', `Audit_Report_${startDate}_to_${endDate}.csv`)
+            link.setAttribute('download', `Audit_Analytics_${startDate}_to_${endDate}.csv`)
             link.style.visibility = 'hidden'
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
 
-            setMessage({ text: `Report successfully generated with ${data.length} records.`, type: 'success' })
+            setMessage({ text: `Success! Exported ${data.length} records. Check your downloads folder.`, type: 'success' })
         } catch (err) {
             console.error('Export error:', err)
-            setMessage({ text: 'Failed to generate report: ' + err.message, type: 'error' })
+            setMessage({ text: 'Server error during report compilation: ' + err.message, type: 'error' })
         } finally {
             setExporting(false)
         }
     }
 
     return (
-        <div style={{ width: '100%', maxWidth: '800px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c', marginBottom: '30px' }}>
-                Audit Reports
-            </h1>
+        <div className="fade-in" style={{ width: '100%', maxWidth: '900px' }}>
+            <AdminPageHeader
+                title="Data Analytics"
+                subtitle="Generate and export comprehensive CSV insights for external reporting."
+            />
 
-            <div style={{ background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '10px' }}>Export Audit Results</h2>
-                <p style={{ color: '#718096', marginBottom: '30px' }}>
-                    Select a date range to download a comprehensive CSV report of all completed audits.
-                </p>
+            <div style={{
+                background: 'white',
+                padding: '48px',
+                borderRadius: '20px',
+                boxShadow: '0 4px 30px rgba(0,0,0,0.03)',
+                border: '1px solid #e2e8f0',
+                position: 'relative',
+                overflow: 'hidden'
+            }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+                        <div style={{ width: '12px', height: '12px', background: '#4f46e5', borderRadius: '50%' }}></div>
+                        <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Configure Export Timeline</h2>
+                    </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-                    <div>
-                        <label style={labelStyle}>Start Date</label>
-                        <input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            style={inputStyle}
-                        />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '40px' }}>
+                        <div>
+                            <label style={labelStyle}>Start Date (Inclusive)</label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                style={inputStyle}
+                            />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>End Date (Inclusive)</label>
+                            <input
+                                type="date"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                                style={inputStyle}
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <label style={labelStyle}>End Date</label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            style={inputStyle}
-                        />
-                    </div>
+
+                    {message.text && (
+                        <div style={{
+                            padding: '16px 20px',
+                            borderRadius: '12px',
+                            marginBottom: '32px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            background: message.type === 'error' ? '#fef2f2' : (message.type === 'success' ? '#f0fdf4' : '#eff6ff'),
+                            color: message.type === 'error' ? '#b91c1c' : (message.type === 'success' ? '#15803d' : '#1d4ed8'),
+                            border: `1px solid ${message.type === 'error' ? '#fee2e2' : (message.type === 'success' ? '#dcfce7' : '#dbeafe')}`
+                        }}>
+                            <span>{message.type === 'error' ? '❌' : (message.type === 'success' ? '✅' : 'ℹ️')}</span>
+                            {message.text}
+                        </div>
+                    )}
+
+                    <button
+                        onClick={handleExport}
+                        disabled={exporting}
+                        className="interactive-btn"
+                        style={{
+                            width: '100%',
+                            padding: '16px',
+                            background: exporting ? '#94a3b8' : 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '14px',
+                            fontWeight: '800',
+                            fontSize: '16px',
+                            cursor: exporting ? 'not-allowed' : 'pointer',
+                            boxShadow: exporting ? 'none' : '0 6px 24px rgba(79, 70, 229, 0.25)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '12px'
+                        }}
+                    >
+                        {exporting ? (
+                            <>
+                                <span className="rotate">⏳</span>
+                                Compiling...
+                            </>
+                        ) : (
+                            <>
+                                <span>📥</span>
+                                Download Comprehensive Audit Report
+                            </>
+                        )}
+                    </button>
                 </div>
-
-                {message.text && (
-                    <div style={{
-                        padding: '15px',
-                        borderRadius: '6px',
-                        marginBottom: '20px',
-                        fontSize: '14px',
-                        background: message.type === 'error' ? '#fff5f5' : (message.type === 'success' ? '#f0fff4' : '#ebf8ff'),
-                        color: message.type === 'error' ? '#c53030' : (message.type === 'success' ? '#2f855a' : '#2b6cb0'),
-                        border: `1px solid ${message.type === 'error' ? '#feb2b2' : (message.type === 'success' ? '#c6f6d5' : '#bee3f8')}`
-                    }}>
-                        {message.type === 'error' ? '⚠️ ' : (message.type === 'success' ? '✅ ' : 'ℹ️ ')}
-                        {message.text}
-                    </div>
-                )}
-
-                <button
-                    onClick={handleExport}
-                    disabled={exporting}
-                    style={{
-                        width: '100%',
-                        padding: '14px',
-                        background: exporting ? '#a0aec0' : '#4f46e5',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '600',
-                        fontSize: '16px',
-                        cursor: exporting ? 'not-allowed' : 'pointer',
-                        transition: 'background 0.2s',
-                        boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)'
-                    }}
-                >
-                    {exporting ? 'Processing Report...' : '📥 Download CSV Report'}
-                </button>
             </div>
 
-            <div style={{ marginTop: '40px', background: '#edf2f7', padding: '20px', borderRadius: '10px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '10px' }}>What's included in the report?</h3>
-                <ul style={{ fontSize: '14px', color: '#4a5568', lineHeight: '1.6', paddingLeft: '20px' }}>
-                    <li>All original CSV columns (Region, Area, Territory, etc.)</li>
-                    <li>Audio metadata (Link, Duration)</li>
-                    <li>Auditor details (Email, Completion timestamp)</li>
-                    <li><strong>All survey answers</strong> flattened into individual columns</li>
-                </ul>
+            <div style={{
+                marginTop: '48px',
+                background: '#f8fafc',
+                padding: '32px',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: '24px'
+            }}>
+                <div style={{ fontSize: '32px' }}>📑</div>
+                <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#0f172a', marginBottom: '12px' }}>Report Specification</h3>
+                    <ul style={{ fontSize: '14px', color: '#64748b', lineHeight: '1.8', margin: 0, paddingLeft: '20px' }}>
+                        <li><strong>Metadata:</strong> Includes all geographic and operational data from original CSV.</li>
+                        <li><strong>Audio Trace:</strong> Cloud storage links and session durations for verification.</li>
+                        <li><strong>Flattened Responses:</strong> Each survey question is mapped to its own dynamic column.</li>
+                        <li><strong>Excel Optimized:</strong> Export uses UTF-8 BOM for seamless Microsoft Excel compatibility.</li>
+                    </ul>
+                </div>
             </div>
         </div>
     )
@@ -182,18 +222,24 @@ export default function Reports() {
 
 const labelStyle = {
     display: 'block',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: '#4a5568',
-    marginBottom: '8px'
+    fontSize: '12px',
+    fontWeight: '800',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    marginBottom: '10px'
 }
 
 const inputStyle = {
     width: '100%',
-    padding: '10px',
-    border: '1px solid #cbd5e0',
-    borderRadius: '6px',
-    fontSize: '14px',
+    padding: '14px 18px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    fontSize: '15px',
+    fontWeight: '600',
+    background: '#f8fafc',
     outline: 'none',
-    color: '#2d3748'
+    color: '#0f172a',
+    transition: 'all 0.2s',
+    cursor: 'pointer'
 }

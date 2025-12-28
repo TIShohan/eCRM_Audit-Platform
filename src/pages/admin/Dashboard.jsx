@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
-        totalUsers: 0,
-        totalAuditData: 0,
-        completedAudits: 0,
-        pendingAudits: 0
+        total: 0,
+        completed: 0,
+        pending: 0,
+        activeAuditors: 0,
+        totalAuditors: 0
     })
     const [loading, setLoading] = useState(true)
 
@@ -16,148 +18,105 @@ export default function Dashboard() {
 
     const fetchStats = async () => {
         try {
-            // Total users
-            const { count: usersCount } = await supabase
-                .from('user_profiles')
-                .select('*', { count: 'exact', head: true })
+            setLoading(true)
 
-            // Total audit data
+            // Total audit data (non-archived)
             const { count: auditDataCount } = await supabase
                 .from('audit_data')
                 .select('*', { count: 'exact', head: true })
+                .eq('is_archived', false)
 
-            // Completed audits
+            // Completed audits (non-archived)
             const { count: completedCount } = await supabase
                 .from('audit_data')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'completed')
+                .eq('is_archived', false)
 
-            // Pending audits
+            // Pending audits (non-archived)
             const { count: pendingCount } = await supabase
                 .from('audit_data')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending')
+                .eq('is_archived', false)
+
+            // Total Auditors
+            const { count: totalAuditors } = await supabase
+                .from('user_profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'auditor')
+
+            // Active Auditors
+            const { count: activeAuditors } = await supabase
+                .from('user_profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'auditor')
+                .eq('is_active', true)
 
             setStats({
-                totalUsers: usersCount || 0,
-                totalAuditData: auditDataCount || 0,
-                completedAudits: completedCount || 0,
-                pendingAudits: pendingCount || 0
+                total: auditDataCount || 0,
+                completed: completedCount || 0,
+                pending: pendingCount || 0,
+                activeAuditors: activeAuditors || 0,
+                totalAuditors: totalAuditors || 0
             })
         } catch (error) {
-            console.error('Error fetching stats:', error)
+            console.error('Error fetching admin stats:', error)
         } finally {
             setLoading(false)
         }
     }
 
-    if (loading) {
-        return <div>Loading dashboard...</div>
-    }
-
     return (
-        <div>
-            <h1 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '30px', color: '#1a202c' }}>
-                Dashboard
-            </h1>
+        <div className="fade-in">
+            <AdminPageHeader
+                title="Operational Overview"
+                subtitle="Real-time performance metrics and system administrative controls."
+            />
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '20px',
-                marginBottom: '40px'
-            }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                <StatCard label="Total Data" value={stats.total} icon="📦" color="#4f46e5" />
+                <StatCard label="Completed Data" value={stats.completed} icon="✅" color="#10b981" />
+                <StatCard label="Remaining" value={stats.total - stats.completed} icon="⏳" color="#f59e0b" />
                 <StatCard
-                    title="Total Users"
-                    value={stats.totalUsers}
+                    label="Total Active Users"
+                    value={`${stats.activeAuditors}/${stats.totalAuditors}`}
                     icon="👥"
-                    color="#667eea"
+                    color="#7c3aed"
                 />
-                <StatCard
-                    title="Total Audit Records"
-                    value={stats.totalAuditData}
-                    icon="📁"
-                    color="#48bb78"
-                />
-                <StatCard
-                    title="Completed Audits"
-                    value={stats.completedAudits}
-                    icon="✅"
-                    color="#38b2ac"
-                />
-                <StatCard
-                    title="Pending Audits"
-                    value={stats.pendingAudits}
-                    icon="⏳"
-                    color="#ed8936"
-                />
-            </div>
-
-            <div style={{
-                background: 'white',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-            }}>
-                <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '15px' }}>
-                    Quick Actions
-                </h2>
-                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                    <ActionButton href="/admin/users" label="Manage Users" />
-                    <ActionButton href="/admin/data" label="Upload Data" />
-                    <ActionButton href="/admin/questions" label="Configure Questions" />
-                    <ActionButton href="/admin/reports" label="Export Reports" />
-                </div>
             </div>
         </div>
     )
 }
 
-function StatCard({ title, value, icon, color }) {
+function StatCard({ label, value, icon, color }) {
     return (
         <div style={{
             background: 'white',
             padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            borderLeft: `4px solid ${color}`
+            borderRadius: '20px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
+            border: `1px solid #f1f5f9`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px'
         }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <p style={{ fontSize: '14px', color: '#718096', marginBottom: '8px' }}>
-                        {title}
-                    </p>
-                    <p style={{ fontSize: '32px', fontWeight: '700', color: '#1a202c' }}>
-                        {value}
-                    </p>
-                </div>
-                <div style={{ fontSize: '40px', opacity: 0.3 }}>
-                    {icon}
-                </div>
+            <div style={{
+                width: '52px',
+                height: '52px',
+                background: `${color}10`,
+                borderRadius: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '24px'
+            }}>
+                {icon}
+            </div>
+            <div>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                <div style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a' }}>{value}</div>
             </div>
         </div>
-    )
-}
-
-function ActionButton({ href, label }) {
-    return (
-        <a
-            href={href}
-            style={{
-                display: 'inline-block',
-                padding: '10px 20px',
-                background: '#667eea',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#5568d3'}
-            onMouseLeave={(e) => e.target.style.background = '#667eea'}
-        >
-            {label}
-        </a>
     )
 }

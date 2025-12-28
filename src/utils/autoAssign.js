@@ -21,6 +21,7 @@ export async function autoAssignRecords() {
             .select('id')
             .is('assigned_to', null)
             .eq('status', 'pending')
+            .eq('is_archived', false)
 
         if (dataError) throw dataError
         if (!unassigned || unassigned.length === 0) return { count: 0, message: 'No unassigned records found.' }

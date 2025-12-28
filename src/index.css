@@ -6,6 +6,10 @@
   font-weight: 400;
   color: #1a202c;
   background-color: #f7fafc;
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --primary: #4f46e5;
+  --secondary: #6366f1;
 }
 
 body {
@@ -80,6 +84,26 @@ button {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
+.interactive-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.interactive-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.interactive-btn:active {
+  transform: translateY(0);
+}
+
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+}
+
 /* Response Adjustments for 16:9 Laptops */
 @media (max-width: 1366px) {
   .sidebar-width {
@@ -113,12 +137,10 @@ button {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

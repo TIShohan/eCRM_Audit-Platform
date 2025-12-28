@@ -47,87 +47,127 @@ export default function UserForm({ user, onClose, onSuccess }) {
     }
 
     return (
-        <div style={modalOverlayStyle}>
+        <div style={modalOverlayStyle} className="fade-in" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalContentStyle}>
-                <h2 style={{ marginBottom: '20px' }}>{isEditing ? 'Edit User' : 'Create New User'}</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                            {isEditing ? 'Modify Auditor' : 'Register Auditor'}
+                        </h2>
+                        <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                            {isEditing ? 'Update profile and quotas' : 'Create a new system access'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="interactive-btn"
+                        style={{ border: 'none', background: '#f1f5f9', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
+                    >
+                        ×
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Full Name</label>
-                        <input
-                            type="text"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            required
-                            style={inputStyle}
-                        />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>Full Name</label>
+                            <input
+                                type="text"
+                                value={fullName}
+                                onChange={(e) => setFullName(e.target.value)}
+                                required
+                                placeholder="John Doe"
+                                style={inputStyle}
+                            />
+                        </div>
+
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>Mobile Number</label>
+                            <input
+                                type="tel"
+                                value={mobileNumber}
+                                onChange={(e) => setMobileNumber(e.target.value)}
+                                required
+                                placeholder="017xxxxxxxx"
+                                style={inputStyle}
+                            />
+                        </div>
                     </div>
 
                     <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Mobile Number</label>
-                        <input
-                            type="tel"
-                            value={mobileNumber}
-                            onChange={(e) => setMobileNumber(e.target.value)}
-                            required
-                            style={inputStyle}
-                        />
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Email</label>
+                        <label style={labelStyle}>Email Address</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             disabled={isEditing}
-                            style={inputStyle}
+                            placeholder="auditor@ecrm.com"
+                            style={{ ...inputStyle, opacity: isEditing ? 0.7 : 1, cursor: isEditing ? 'not-allowed' : 'text' }}
                         />
                     </div>
 
                     {!isEditing && (
                         <div style={inputGroupStyle}>
-                            <label style={labelStyle}>Password</label>
+                            <label style={labelStyle}>Access Password</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                placeholder="••••••••"
                                 style={inputStyle}
                             />
                         </div>
                     )}
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Role</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            style={inputStyle}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>System Role</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                style={inputStyle}
+                            >
+                                <option value="auditor">Auditor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+
+                        <div style={inputGroupStyle}>
+                            <label style={labelStyle}>Daily Limit</label>
+                            <input
+                                type="number"
+                                value={dailyLimit}
+                                onChange={(e) => setDailyLimit(e.target.value)}
+                                required
+                                style={inputStyle}
+                            />
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div style={{ color: '#ef4444', fontSize: '12px', marginBottom: '16px', background: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fee2e2', fontWeight: '600' }}>
+                            ⚠️ {error}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="interactive-btn"
+                            style={{ flex: 1, padding: '12px', background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '14px' }}
                         >
-                            <option value="auditor">Auditor</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Daily Limit</label>
-                        <input
-                            type="number"
-                            value={dailyLimit}
-                            onChange={(e) => setDailyLimit(e.target.value)}
-                            required
-                            style={inputStyle}
-                        />
-                    </div>
-
-                    {error && <p style={{ color: 'red', fontSize: '14px', marginBottom: '15px' }}>{error}</p>}
-
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                        <button type="button" onClick={onClose} style={cancelButtonStyle}>Cancel</button>
-                        <button type="submit" disabled={loading} style={submitButtonStyle}>
-                            {loading ? 'Processing...' : isEditing ? 'Update User' : 'Create User'}
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="interactive-btn"
+                            style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' }}
+                        >
+                            {loading ? 'Saving...' : isEditing ? 'Update User' : 'Register User'}
                         </button>
                     </div>
                 </form>
@@ -140,58 +180,50 @@ const modalOverlayStyle = {
     position: 'fixed',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
+    width: '100vw',
+    height: '100vh',
+    background: 'transparent',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000
+    zIndex: 9999,
+    pointerEvents: 'auto'
 }
 
 const modalContentStyle = {
     background: 'white',
-    padding: '30px',
-    borderRadius: '8px',
-    width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    padding: '32px',
+    borderRadius: '24px',
+    width: '90%',
+    maxWidth: '480px',
+    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0,0,0,0.05)',
+    border: '1px solid #e2e8f0',
+    position: 'relative'
 }
 
 const inputGroupStyle = {
-    marginBottom: '15px'
+    marginBottom: '20px'
 }
 
 const labelStyle = {
     display: 'block',
-    fontSize: '14px',
-    fontWeight: '600',
-    marginBottom: '5px',
-    color: '#4a5568'
+    fontSize: '12px',
+    fontWeight: '800',
+    color: '#64748b',
+    marginBottom: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
 }
 
 const inputStyle = {
     width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #cbd5e0',
-    borderRadius: '4px',
-    fontSize: '14px'
-}
-
-const cancelButtonStyle = {
-    padding: '8px 16px',
-    background: '#edf2f7',
-    color: '#4a5568',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-}
-
-const submitButtonStyle = {
-    padding: '8px 16px',
-    background: '#667eea',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
+    padding: '12px 16px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#0f172a',
+    background: '#f8fafc',
+    outline: 'none',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
 }

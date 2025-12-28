@@ -62,7 +62,7 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
                 questionId = newQ.id
             }
 
-            // 2. Clear old options if editing (Simple approach for now)
+            // 2. Clear old options if editing
             if (question?.id) {
                 await supabase.from('answer_options').delete().eq('question_id', questionId)
             }
@@ -90,25 +90,41 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
     }
 
     return (
-        <div style={overlayStyle}>
+        <div style={overlayStyle} className="fade-in" onClick={(e) => e.target === e.currentTarget && onClose()}>
             <div style={modalStyle}>
-                <h2 style={{ marginBottom: '20px' }}>{question ? 'Edit' : 'Add'} {type === 'common' ? 'Common' : 'Campaign'} Question</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                            {question ? 'Edit Logic' : 'New Audit Question'}
+                        </h2>
+                        <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>
+                            {type === 'common' ? '🌍 Common across all campaigns' : '🎯 Campaign specific metric'}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="interactive-btn"
+                        style={{ border: 'none', background: '#f1f5f9', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}
+                    >
+                        ×
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <div style={formGroupStyle}>
-                        <label style={labelStyle}>Question Text</label>
+                        <label style={labelStyle}>Question Narrative</label>
                         <textarea
                             required
                             value={text}
                             onChange={(e) => setText(e.target.value)}
-                            placeholder="e.g. Is the customer information correct?"
-                            style={{ ...inputStyle, height: '80px', resize: 'vertical' }}
+                            placeholder="e.g. Did the agent follow the standard greeting?"
+                            style={{ ...inputStyle, height: '80px', resize: 'none' }}
                         />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-                        <div style={{ flex: 1 }}>
-                            <label style={labelStyle}>Order Index</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                        <div>
+                            <label style={labelStyle}>Sort Order</label>
                             <input
                                 type="number"
                                 value={orderIndex}
@@ -117,33 +133,34 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
                             />
                         </div>
                         {type === 'campaign' && (
-                            <div style={{ flex: 2 }}>
-                                <label style={labelStyle}>Campaign ID</label>
+                            <div>
+                                <label style={labelStyle}>Target Campaign ID</label>
                                 <input
                                     required
                                     value={campaignId}
                                     onChange={(e) => setCampaignId(e.target.value)}
-                                    placeholder="e.g. 985"
+                                    placeholder="Ex: 102"
                                     style={inputStyle}
                                 />
                             </div>
                         )}
                     </div>
 
-                    <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '15px', marginBottom: '20px' }}>
-                        <label style={labelStyle}>Answer Options</label>
-                        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                    <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                        <label style={labelStyle}>Response Options</label>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                             <input
                                 value={newOption}
                                 onChange={(e) => setNewOption(e.target.value)}
-                                placeholder="Add option (e.g. Yes)"
+                                placeholder="Add option (e.g. Pass)"
                                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddOption())}
-                                style={inputStyle}
+                                style={{ ...inputStyle, background: 'white' }}
                             />
                             <button
                                 type="button"
                                 onClick={handleAddOption}
-                                style={{ padding: '0 15px', background: '#2d3748', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                className="interactive-btn"
+                                style={{ padding: '0 20px', background: '#0f172a', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '13px' }}
                             >
                                 Add
                             </button>
@@ -151,35 +168,41 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                             {options.map((opt) => (
-                                <div key={opt.id} style={{ display: 'flex', alignItems: 'center', background: '#f7fafc', border: '1px solid #cbd5e0', padding: '4px 10px', borderRadius: '4px', fontSize: '13px' }}>
+                                <div key={opt.id} style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '700', color: '#334155' }}>
                                     {opt.option_text}
                                     <button
                                         type="button"
                                         onClick={() => handleRemoveOption(opt.id)}
-                                        style={{ marginLeft: '8px', background: 'none', border: 'none', color: '#e53e3e', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px' }}
+                                        style={{ marginLeft: '8px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: '800', fontSize: '14px', padding: 0 }}
                                     >
                                         ×
                                     </button>
                                 </div>
                             ))}
-                            {options.length === 0 && <span style={{ color: '#a0aec0', fontSize: '12px' }}>No options added yet.</span>}
+                            {options.length === 0 && <span style={{ color: '#94a3b8', fontSize: '12px', fontStyle: 'italic' }}>No options defined yet.</span>}
                         </div>
                     </div>
 
-                    {error && <div style={{ color: '#e53e3e', fontSize: '13px', marginBottom: '15px', background: '#fff5f5', padding: '8px', borderRadius: '4px' }}>{error}</div>}
+                    {error && (
+                        <div style={{ color: '#ef4444', fontSize: '12px', marginBottom: '16px', background: '#fef2f2', padding: '10px', borderRadius: '8px', border: '1px solid #fee2e2', fontWeight: '600' }}>
+                            ⚠️ {error}
+                        </div>
+                    )}
 
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
                         <button
                             type="button"
                             onClick={onClose}
-                            style={{ flex: 1, padding: '10px', background: '#edf2f7', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                            className="interactive-btn"
+                            style={{ flex: 1, padding: '12px', background: '#f8fafc', color: '#64748b', border: '1px solid #e2e8f0', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '14px' }}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            style={{ flex: 1, padding: '10px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}
+                            className="interactive-btn"
+                            style={{ flex: 1, padding: '12px', background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '800', cursor: 'pointer', fontSize: '14px', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' }}
                         >
                             {loading ? 'Saving...' : 'Save Question'}
                         </button>
@@ -190,8 +213,52 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
     )
 }
 
-const overlayStyle = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }
-const modalStyle = { background: 'white', padding: '30px', borderRadius: '12px', width: '90%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }
-const formGroupStyle = { marginBottom: '15px' }
-const labelStyle = { display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a5568', marginBottom: '5px' }
-const inputStyle = { width: '100%', padding: '10px', border: '1px solid #cbd5e0', borderRadius: '4px', fontSize: '14px', outline: 'none' }
+const overlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'transparent',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 3000,
+    pointerEvents: 'none'
+}
+
+const modalStyle = {
+    background: 'white',
+    padding: '32px',
+    borderRadius: '24px',
+    width: '100%',
+    maxWidth: '560px',
+    boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0,0,0,0.05)',
+    border: '1px solid #e2e8f0',
+    pointerEvents: 'auto'
+}
+
+const formGroupStyle = { marginBottom: '20px' }
+
+const labelStyle = {
+    display: 'block',
+    fontSize: '12px',
+    fontWeight: '800',
+    color: '#64748b',
+    marginBottom: '8px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em'
+}
+
+const inputStyle = {
+    width: '100%',
+    padding: '12px 16px',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    fontSize: '14px',
+    fontWeight: '600',
+    color: '#0f172a',
+    background: '#f8fafc',
+    outline: 'none',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+}

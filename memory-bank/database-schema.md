@@ -15,6 +15,7 @@ Extends `auth.users` with application-specific metadata.
 - `mobile_number` (TEXT)
 - `role` (TEXT, CHECK: 'admin' | 'auditor')
 - `daily_limit` (INTEGER, Default: 50)
+- `is_active` (BOOLEAN, Default: true)
 - `created_at` (TIMESTAMPTZ)
 
 ### 2. audit_data
@@ -73,12 +74,13 @@ Aggregates metrics for the Admin Dashboard.
 ```sql
 CREATE OR REPLACE VIEW daily_inventory_summary AS
 SELECT 
-  (created_at AT TIME ZONE 'UTC')::date as upload_date,
+  contact_date as record_date,
   count(*) as total,
   count(*) FILTER (WHERE status = 'completed') as audited,
   count(*) FILTER (WHERE assigned_to IS NOT NULL AND status = 'pending') as assigned,
   count(*) FILTER (WHERE assigned_to IS NULL AND status = 'pending') as available
 FROM audit_data
+WHERE is_archived = false
 GROUP BY 1
 ORDER BY 1 DESC;
 ```

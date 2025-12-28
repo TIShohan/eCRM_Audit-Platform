@@ -126,6 +126,7 @@ export const AuthProvider = ({ children }) => {
         signOut,
         isAdmin: profile?.role === 'admin',
         isAuditor: profile?.role === 'auditor',
+        isActive: profile?.is_active !== false,
     }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
