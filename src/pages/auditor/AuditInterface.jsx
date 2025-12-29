@@ -155,7 +155,13 @@ export default function AuditInterface() {
     }
 
     const handleSubmit = async () => {
-        if (Object.keys(answers).length < questions.length) {
+        // Check for Skip Logic (Q1: ফাইল নেই or কিছুই শোনা যাচ্ছে না)
+        const firstQuestion = questions[0]
+        const firstAnswerId = answers[firstQuestion?.id]
+        const firstAnswerOption = firstQuestion?.answer_options.find(opt => opt.id === firstAnswerId)
+        const isSkipOption = firstAnswerOption?.option_text === 'ফাইল নেই' || firstAnswerOption?.option_text === 'কিছুই শোনা যাচ্ছে না'
+
+        if (!isSkipOption && Object.keys(answers).length < questions.length) {
             alert('Please answer all questions before submitting.')
             return
         }
@@ -229,6 +235,13 @@ export default function AuditInterface() {
     const skip = (seconds) => {
         audioRef.current.currentTime += seconds
     }
+
+    // Logic for Skip Validation
+    const firstQuestion = questions[0]
+    const firstAnswerId = firstQuestion ? answers[firstQuestion.id] : null
+    const firstAnswerOption = firstQuestion?.answer_options.find(opt => opt.id === firstAnswerId)
+    const isSkipOption = firstAnswerOption?.option_text === 'ফাইল নেই' || firstAnswerOption?.option_text === 'কিছুই শোনা যাচ্ছে না'
+    const canSubmit = isSkipOption || (Object.keys(answers).length >= questions.length && questions.length > 0)
 
     if (loading && !record) return <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '700', color: '#4f46e5' }}>Initializing Audit Environment...</div>
 
@@ -435,78 +448,86 @@ export default function AuditInterface() {
                         gap: '15px 20px',
                         paddingRight: '5px'
                     }}>
-                        {questions.map((q, idx) => (
-                            <div key={q.id} style={{
-                                background: '#f8fafc',
-                                padding: '12px',
-                                borderRadius: '10px',
-                                border: '1px solid #edf2f7',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
-                                    {idx + 1}. {q.question_text}
-                                </p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: 'auto' }}>
-                                    {q.answer_options.map(opt => (
-                                        <button
-                                            key={opt.id}
-                                            onClick={() => handleOptionSelect(q.id, opt.id)}
-                                            style={{
-                                                padding: '8px 18px',
-                                                minWidth: '70px',
-                                                textAlign: 'center',
-                                                fontSize: '12px',
-                                                borderRadius: '8px',
-                                                border: '1px solid',
-                                                borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
-                                                background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
-                                                color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
-                                                fontWeight: answers[q.id] === opt.id ? '700' : '500',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                boxShadow: answers[q.id] === opt.id ? '0 2px 4px rgba(79, 70, 229, 0.1)' : 'none'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (answers[q.id] !== opt.id) {
-                                                    e.currentTarget.style.borderColor = '#4f46e5'
-                                                    e.currentTarget.style.background = '#f8fafc'
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (answers[q.id] !== opt.id) {
-                                                    e.currentTarget.style.borderColor = '#e2e8f0'
-                                                    e.currentTarget.style.background = 'white'
-                                                }
-                                            }}
-                                        >
-                                            {opt.option_text}
-                                        </button>
-                                    ))}
+                        {questions.map((q, idx) => {
+                            // 4. Add a blur/opacity effect to subsequent questions when skip logic is active.
+                            const isSkipped = isSkipOption && idx > 0;
+                            return (
+                                <div key={q.id} style={{
+                                    background: isSkipped ? '#f1f5f9' : '#f8fafc',
+                                    padding: '12px',
+                                    borderRadius: '10px',
+                                    border: '1px solid #edf2f7',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    opacity: isSkipped ? 0.5 : 1,
+                                    pointerEvents: isSkipped ? 'none' : 'auto',
+                                    filter: isSkipped ? 'grayscale(1)' : 'none',
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
+                                        {idx + 1}. {q.question_text}
+                                    </p>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: 'auto' }}>
+                                        {q.answer_options.map(opt => (
+                                            <button
+                                                key={opt.id}
+                                                onClick={() => handleOptionSelect(q.id, opt.id)}
+                                                style={{
+                                                    padding: '8px 18px',
+                                                    minWidth: '70px',
+                                                    textAlign: 'center',
+                                                    fontSize: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid',
+                                                    borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
+                                                    background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
+                                                    color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
+                                                    fontWeight: answers[q.id] === opt.id ? '700' : '500',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s',
+                                                    boxShadow: answers[q.id] === opt.id ? '0 2px 4px rgba(79, 70, 229, 0.1)' : 'none'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    if (answers[q.id] !== opt.id) {
+                                                        e.currentTarget.style.borderColor = '#4f46e5'
+                                                        e.currentTarget.style.background = '#f8fafc'
+                                                    }
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    if (answers[q.id] !== opt.id) {
+                                                        e.currentTarget.style.borderColor = '#e2e8f0'
+                                                        e.currentTarget.style.background = 'white'
+                                                    }
+                                                }}
+                                            >
+                                                {opt.option_text}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
 
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting || Object.keys(answers).length < questions.length}
+                        disabled={submitting || !canSubmit}
                         style={{
                             width: '100%',
                             padding: '12px',
                             marginTop: '15px',
-                            background: (submitting || Object.keys(answers).length < questions.length) ? '#e2e8f0' : 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+                            background: (submitting || !canSubmit) ? '#e2e8f0' : 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
                             fontWeight: '800',
                             fontSize: '14px',
-                            cursor: (submitting || Object.keys(answers).length < questions.length) ? 'not-allowed' : 'pointer',
-                            boxShadow: (submitting || Object.keys(answers).length < questions.length) ? 'none' : '0 10px 15px -3px rgba(72, 187, 120, 0.3)',
+                            cursor: (submitting || !canSubmit) ? 'not-allowed' : 'pointer',
+                            boxShadow: (submitting || !canSubmit) ? 'none' : '0 10px 15px -3px rgba(72, 187, 120, 0.3)',
                             transition: 'transform 0.2s'
                         }}
                         onMouseEnter={(e) => {
-                            if (!submitting && Object.keys(answers).length >= questions.length) {
+                            if (!submitting && canSubmit) {
                                 e.currentTarget.style.transform = 'translateY(-2px)'
                             }
                         }}
