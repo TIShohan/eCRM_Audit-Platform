@@ -299,7 +299,7 @@ export default function AuditInterface() {
             <div className={`audit-grid ${isTransitioning ? 'blur' : 'fade-in'}`} style={{
                 width: '100%',
                 display: 'grid',
-                gridTemplateColumns: '1fr 550px',
+                gridTemplateColumns: '540px 1fr',
                 gap: '15px',
                 alignItems: 'start',
                 opacity: isTransitioning ? 0.6 : 1,
@@ -444,7 +444,7 @@ export default function AuditInterface() {
                                 display: 'flex',
                                 flexDirection: 'column'
                             }}>
-                                <p style={{ fontSize: '12px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
+                                <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
                                     {idx + 1}. {q.question_text}
                                 </p>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: 'auto' }}>
@@ -453,16 +453,19 @@ export default function AuditInterface() {
                                             key={opt.id}
                                             onClick={() => handleOptionSelect(q.id, opt.id)}
                                             style={{
-                                                padding: '6px 10px',
-                                                fontSize: '11px',
-                                                borderRadius: '6px',
+                                                padding: '8px 18px',
+                                                minWidth: '70px',
+                                                textAlign: 'center',
+                                                fontSize: '12px',
+                                                borderRadius: '8px',
                                                 border: '1px solid',
                                                 borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
                                                 background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
                                                 color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
                                                 fontWeight: answers[q.id] === opt.id ? '700' : '500',
                                                 cursor: 'pointer',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                boxShadow: answers[q.id] === opt.id ? '0 2px 4px rgba(79, 70, 229, 0.1)' : 'none'
                                             }}
                                             onMouseEnter={(e) => {
                                                 if (answers[q.id] !== opt.id) {
