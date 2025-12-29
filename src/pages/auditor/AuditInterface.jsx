@@ -396,9 +396,35 @@ export default function AuditInterface() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                                <button onClick={() => skip(-10)} style={smallButtonStyle}>⏪ 10s</button>
-                                <button onClick={() => skip(10)} style={smallButtonStyle}>10s ⏩</button>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+                                <button
+                                    onClick={() => skip(-10)}
+                                    style={skipButtonStyle}
+                                    onMouseDown={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(1px) scale(0.97)';
+                                        e.currentTarget.style.background = '#f1f5f9';
+                                    }}
+                                    onMouseUp={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                        e.currentTarget.style.background = 'white';
+                                    }}
+                                >
+                                    ⏪ 10s Backward
+                                </button>
+                                <button
+                                    onClick={() => skip(10)}
+                                    style={skipButtonStyle}
+                                    onMouseDown={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(1px) scale(0.97)';
+                                        e.currentTarget.style.background = '#f1f5f9';
+                                    }}
+                                    onMouseUp={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                        e.currentTarget.style.background = 'white';
+                                    }}
+                                >
+                                    10s Forward ⏩
+                                </button>
                                 <div style={{ flex: 1 }}></div>
                                 {[1, 1.5, 2].map(speed => (
                                     <button
@@ -449,7 +475,6 @@ export default function AuditInterface() {
                         paddingRight: '5px'
                     }}>
                         {questions.map((q, idx) => {
-                            // 4. Add a blur/opacity effect to subsequent questions when skip logic is active.
                             const isSkipped = isSkipOption && idx > 0;
                             return (
                                 <div key={q.id} style={{
@@ -526,13 +551,19 @@ export default function AuditInterface() {
                             boxShadow: (submitting || !canSubmit) ? 'none' : '0 10px 15px -3px rgba(72, 187, 120, 0.3)',
                             transition: 'transform 0.2s'
                         }}
-                        onMouseEnter={(e) => {
+                        onMouseDown={(e) => {
                             if (!submitting && canSubmit) {
-                                e.currentTarget.style.transform = 'translateY(-2px)'
+                                e.currentTarget.style.transform = 'translateY(1px) scale(0.98)'
+                                e.currentTarget.style.boxShadow = 'none'
+                                e.currentTarget.style.filter = 'brightness(0.9)'
                             }
                         }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)'
+                        onMouseUp={(e) => {
+                            if (!submitting && canSubmit) {
+                                e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(72, 187, 120, 0.3)'
+                                e.currentTarget.style.filter = 'brightness(1)'
+                            }
                         }}
                     >
                         {submitting ? 'Submitting...' : 'COMPLETE & NEXT ➔'}
@@ -584,4 +615,22 @@ const smallButtonStyle = {
     background: 'white',
     color: '#4a5568',
     cursor: 'pointer'
+}
+
+const skipButtonStyle = {
+    padding: '8px 20px',
+    fontSize: '12px',
+    fontWeight: '700',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    background: 'white',
+    color: '#4f46e5',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    minWidth: '140px'
 }
