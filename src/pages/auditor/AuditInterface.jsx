@@ -299,8 +299,8 @@ export default function AuditInterface() {
             <div className={`audit-grid ${isTransitioning ? 'blur' : 'fade-in'}`} style={{
                 width: '100%',
                 display: 'grid',
-                gridTemplateColumns: '1fr 400px',
-                gap: '20px',
+                gridTemplateColumns: '1fr 550px',
+                gap: '15px',
                 alignItems: 'start',
                 opacity: isTransitioning ? 0.6 : 1,
                 transition: 'opacity 0.4s ease'
@@ -414,7 +414,7 @@ export default function AuditInterface() {
                             <h3 style={{ fontSize: '15px', fontWeight: '600' }}>Location Verification</h3>
                             <span style={{ fontSize: '11px', color: '#48bb78', fontWeight: '700' }}>● GPS ENABLED</span>
                         </div>
-                        <div style={{ height: '260px', borderRadius: '8px', overflow: 'hidden', background: '#e2e8f0', border: '1px solid #edf2f7' }}>
+                        <div style={{ height: '180px', borderRadius: '8px', overflow: 'hidden', background: '#e2e8f0', border: '1px solid #edf2f7' }}>
                             {record.location ? (() => {
                                 const [lat, lng] = record.location.split(',').map(s => parseFloat(s.trim()))
                                 return <MapPreview lat={lat} lng={lng} />
@@ -429,13 +429,25 @@ export default function AuditInterface() {
                         Audit Checklist
                     </h3>
 
-                    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 220px)', paddingRight: '5px' }}>
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '15px 20px',
+                        paddingRight: '5px'
+                    }}>
                         {questions.map((q, idx) => (
-                            <div key={q.id} style={{ marginBottom: '20px' }}>
-                                <p style={{ fontSize: '13px', fontWeight: '700', color: '#2d3748', marginBottom: '8px', lineHeight: '1.4' }}>
+                            <div key={q.id} style={{
+                                background: '#f8fafc',
+                                padding: '12px',
+                                borderRadius: '10px',
+                                border: '1px solid #edf2f7',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <p style={{ fontSize: '12px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
                                     {idx + 1}. {q.question_text}
                                 </p>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: 'auto' }}>
                                     {q.answer_options.map(opt => (
                                         <button
                                             key={opt.id}
