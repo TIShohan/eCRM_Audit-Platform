@@ -258,15 +258,21 @@ export default function AuditInterface() {
                     boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
                 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ fontSize: '20px' }}>🎯</div>
+                        <div style={{ fontSize: '24px' }}>
+                            {((profile?.daily_limit || 50) - stats.completedToday) === 1 ? '🏁' :
+                                ((profile?.daily_limit || 50) - stats.completedToday) <= 5 ? '✨' :
+                                    ((profile?.daily_limit || 50) - stats.completedToday) <= 10 ? '🎯' : '💪'}
+                        </div>
                         <div>
                             <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Queue Progress</div>
                             <div style={{ fontSize: '15px', fontWeight: '800' }}>
-                                {stats.remaining < 15 ? (
-                                    <>Only <span style={{ fontSize: '20px', color: '#fcd34d' }}>{stats.remaining}</span> audits remaining!</>
-                                ) : (
-                                    <>Keep going! You're doing great.</>
-                                )}
+                                {(() => {
+                                    const remaining = (profile?.daily_limit || 50) - stats.completedToday;
+                                    if (remaining === 1) return <>The final one! <span style={{ color: '#fcd34d', fontSize: '20px', textShadow: '0 0 10px rgba(252, 211, 77, 0.5)' }}>🚀 Almost there!</span></>;
+                                    if (remaining <= 5) return <>Last sprint! Only <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> left. 🎉</>;
+                                    if (remaining <= 10) return <>Great pace! <span style={{ color: '#fcd34d' }}>{remaining}</span> to go. Keep it up!</>;
+                                    return <>You have <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> more to go today.</>;
+                                })()}
                             </div>
                         </div>
                     </div>
