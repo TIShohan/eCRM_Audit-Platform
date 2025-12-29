@@ -18,6 +18,7 @@ export default function AuditInterface() {
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
     const [limitReached, setLimitReached] = useState(false)
+    const [isTransitioning, setIsTransitioning] = useState(false) // New state for background loading
     const [playbackRate, setPlaybackRate] = useState(1)
     const [isPlaying, setIsPlaying] = useState(false)
     const [stats, setStats] = useState({ remaining: 0, completedToday: 0 })
@@ -62,53 +63,75 @@ export default function AuditInterface() {
                 return
             }
 
-            // 2. Fetch one record: 
-            // Try to find one already assigned to this auditor that is pending
-            const { data: existingAssigned, error: existingError } = await supabase
+            // 2. Buffer Management:
+            // Check how many pending records this auditor already has assigned
+            const { data: existingPending, error: existingError } = await supabase
                 .from('audit_data')
                 .select('*')
                 .eq('assigned_to', user.id)
                 .eq('status', 'pending')
                 .eq('is_archived', false)
-                .limit(1)
+                .order('created_at', { ascending: true })
 
-            let currentRecord = existingAssigned?.[0]
+            if (existingError) throw existingError
 
-            // If no record is assigned, PULL the oldest unassigned pending record from the global queue
+            let currentRecord = existingPending?.[0]
+
+            // 3. If buffer is empty, pull a new BATCH of 5 random records
             if (!currentRecord) {
-                const { data: pulled, error: pullError } = await supabase
+                // Get available count for random offset
+                const { count: availableCount } = await supabase
                     .from('audit_data')
-                    .select('*')
+                    .select('*', { count: 'exact', head: true })
                     .is('assigned_to', null)
                     .eq('status', 'pending')
                     .eq('is_archived', false)
-                    .order('created_at', { ascending: true })
-                    .limit(1)
 
-                if (pullError) throw pullError
+                if (availableCount && availableCount > 0) {
+                    // Calculate how many we can pull (max 5, but don't exceed daily limit)
+                    const remainingQuota = (profile?.daily_limit || 50) - todayCount
+                    const batchSize = Math.min(5, availableCount, remainingQuota)
 
-                if (pulled && pulled.length > 0) {
-                    // Update the record immediately to "claim" it
-                    const { data: claimed, error: claimError } = await supabase
-                        .from('audit_data')
-                        .update({ assigned_to: user.id })
-                        .eq('id', pulled[0].id)
-                        .select()
+                    if (batchSize > 0) {
+                        const randomIndex = Math.max(0, Math.floor(Math.random() * (availableCount - batchSize)))
 
-                    if (claimError) throw claimError
-                    currentRecord = claimed[0]
+                        // Fetch the IDs of the records to claim
+                        const { data: batchToPull, error: pullError } = await supabase
+                            .from('audit_data')
+                            .select('id')
+                            .is('assigned_to', null)
+                            .eq('status', 'pending')
+                            .eq('is_archived', false)
+                            .range(randomIndex, randomIndex + batchSize - 1)
+
+                        if (pullError) throw pullError
+
+                        if (batchToPull && batchToPull.length > 0) {
+                            const ids = batchToPull.map(r => r.id)
+                            const { data: claimed, error: claimError } = await supabase
+                                .from('audit_data')
+                                .update({ assigned_to: user.id })
+                                .in('id', ids)
+                                .is('assigned_to', null) // Safety check: Only claim if still unassigned
+                                .select()
+
+                            if (claimError) throw claimError
+                            currentRecord = claimed[0]
+                        }
+                    }
                 }
             }
 
             if (!currentRecord) {
                 setRecord(null)
                 setLoading(false)
+                setIsTransitioning(false)
                 return
             }
 
             setRecord(currentRecord)
 
-            // 3. Fetch questions (Common or Campaign-specific for this record)
+            // 4. Fetch questions (Common or Campaign-specific for this record)
             const { data: qData, error: qError } = await supabase
                 .from('questions')
                 .select('*, answer_options(*)')
@@ -123,6 +146,7 @@ export default function AuditInterface() {
             alert('Error loading audit data. Please try again.')
         } finally {
             setLoading(false)
+            setIsTransitioning(false) // Always stop transition on finish
         }
     }
 
@@ -138,6 +162,7 @@ export default function AuditInterface() {
 
         try {
             setSubmitting(true)
+            setIsTransitioning(true) // Start the smooth transition
             const currentRecordId = record.id // Guard ID
 
             // 1. Insert/Upsert responses
@@ -165,18 +190,19 @@ export default function AuditInterface() {
 
             if (updateError) throw updateError
 
-            // 3. Clear current record from state to force UI refresh
-            setRecord(null)
+            // 3. Prepare for next - keep current UI visible for a split second 
+            // then loadNextAudit will replace the stats and record.
             setAnswers({})
             setIsPlaying(false)
             if (audioRef.current) audioRef.current.pause()
 
-            // 4. Fetch the next pending record
+            // 4. Fetch the next pending record (this will handle clearing isTransitioning)
             await loadNextAudit()
 
         } catch (err) {
             console.error('Submit error:', err)
             alert('Failed to submit audit: ' + err.message)
+            setIsTransitioning(false)
         } finally {
             setSubmitting(false)
         }
@@ -204,7 +230,7 @@ export default function AuditInterface() {
         audioRef.current.currentTime += seconds
     }
 
-    if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading audit environment...</div>
+    if (loading && !record) return <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '700', color: '#4f46e5' }}>Initializing Audit Environment...</div>
 
     if (limitReached) {
         return (
@@ -225,11 +251,11 @@ export default function AuditInterface() {
         )
     }
 
-    if (!record) {
+    if (!record && !loading) {
         return (
             <div style={{ padding: '40px', textAlign: 'center' }}>
                 <h2>Queue Empty</h2>
-                <p>No pending audits assigned to you. Great job!</p>
+                <p>No pending audits available. Great job!</p>
                 <button
                     onClick={() => navigate('/auditor')}
                     style={{ marginTop: '20px', padding: '10px 20px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
@@ -241,205 +267,243 @@ export default function AuditInterface() {
     }
 
     return (
-        <div className="audit-grid fade-in" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 400px', gap: '20px', alignItems: 'start' }}>
-
-            {/* Left Column: Data & Audio */}
-            <div>
-                {/* Motivation Bar */}
+        <div style={{ position: 'relative', width: '100%' }}>
+            {/* Smooth Transition Overlay */}
+            {isTransitioning && (
                 <div style={{
-                    background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
-                    padding: '12px 20px',
-                    borderRadius: '12px',
-                    marginBottom: '20px',
+                    position: 'absolute',
+                    inset: '-10px',
+                    background: 'rgba(255,255,255,0.7)',
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 100,
+                    borderRadius: '16px',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                    justifyContent: 'center',
+                    transition: 'all 0.3s ease'
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ fontSize: '24px' }}>
-                            {((profile?.daily_limit || 50) - stats.completedToday) === 1 ? '🏁' :
-                                ((profile?.daily_limit || 50) - stats.completedToday) <= 5 ? '✨' :
-                                    ((profile?.daily_limit || 50) - stats.completedToday) <= 10 ? '🎯' : '💪'}
-                        </div>
-                        <div>
-                            <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Queue Progress</div>
-                            <div style={{ fontSize: '15px', fontWeight: '800' }}>
-                                {(() => {
-                                    const remaining = (profile?.daily_limit || 50) - stats.completedToday;
-                                    if (remaining === 1) return <>The final one! <span style={{ color: '#fcd34d', fontSize: '20px', textShadow: '0 0 10px rgba(252, 211, 77, 0.5)' }}>🚀 Almost there!</span></>;
-                                    if (remaining <= 5) return <>Last sprint! Only <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> left. 🎉</>;
-                                    if (remaining <= 10) return <>Great pace! <span style={{ color: '#fcd34d' }}>{remaining}</span> to go. Keep it up!</>;
-                                    return <>You have <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> more to go today.</>;
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8 }}>COMPLETED TODAY</div>
-                        <div style={{ fontSize: '18px', fontWeight: '900' }}>{stats.completedToday} / {profile?.daily_limit || 50}</div>
-                    </div>
+                    <div style={{
+                        width: '40px',
+                        height: '40px',
+                        border: '3px solid #e2e8f0',
+                        borderTopColor: '#4f46e5',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <div style={{ marginTop: '15px', fontWeight: '800', color: '#4f46e5', fontSize: '14px', letterSpacing: '0.05em' }}>PREPARING NEXT AUDIT...</div>
+                    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                 </div>
+            )}
 
-                <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                        <h2 style={{ fontSize: '18px', fontWeight: '700' }}>Contact Preview</h2>
-                        <span style={{ fontSize: '11px', color: '#718096', fontWeight: '600', background: '#f7fafc', padding: '2px 8px', borderRadius: '4px' }}>
-                            ID: {record.contact_id}
-                        </span>
-                    </div>
+            <div className={`audit-grid ${isTransitioning ? 'blur' : 'fade-in'}`} style={{
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: '1fr 400px',
+                gap: '20px',
+                alignItems: 'start',
+                opacity: isTransitioning ? 0.6 : 1,
+                transition: 'opacity 0.4s ease'
+            }}>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', fontSize: '13px' }}>
-                        <div style={infoBoxStyle}><label style={labelStyle}>Campaign</label>{record.campaign_name}</div>
-                        <div style={infoBoxStyle}><label style={labelStyle}>Date</label>{record.contact_date}</div>
-                        <div style={infoBoxStyle}><label style={labelStyle}>Duration</label>{record.duration}</div>
-                        <div style={infoBoxStyle}><label style={labelStyle}>Outlet</label>{record.outlet_name || 'N/A'}</div>
-                    </div>
-
-                    <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #edf2f7' }} />
-
-                    {/* Audio Player UI - More Compact */}
-                    <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                {/* Left Column: Data & Audio */}
+                <div>
+                    {/* Motivation Bar */}
+                    <div style={{
+                        background: 'linear-gradient(90deg, #4f46e5 0%, #7c3aed 100%)',
+                        padding: '12px 20px',
+                        borderRadius: '12px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: 'white',
+                        boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+                    }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                            <button onClick={togglePlay} style={playButtonStyle}>
-                                {isPlaying ? '⏸' : '▶'}
-                            </button>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                    <span style={{ fontSize: '11px', color: '#4a5568', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audio Review</span>
-                                    <span style={{ fontSize: '11px', color: '#a0aec0' }}>{playbackRate}x Speed</span>
+                            <div style={{ fontSize: '24px' }}>
+                                {((profile?.daily_limit || 50) - stats.completedToday) === 1 ? '🏁' :
+                                    ((profile?.daily_limit || 50) - stats.completedToday) <= 5 ? '✨' :
+                                        ((profile?.daily_limit || 50) - stats.completedToday) <= 10 ? '🎯' : '💪'}
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Queue Progress</div>
+                                <div style={{ fontSize: '15px', fontWeight: '800' }}>
+                                    {(() => {
+                                        const remaining = (profile?.daily_limit || 50) - stats.completedToday;
+                                        if (remaining === 1) return <>The final one! <span style={{ color: '#fcd34d', fontSize: '20px', textShadow: '0 0 10px rgba(252, 211, 77, 0.5)' }}>🚀 Almost there!</span></>;
+                                        if (remaining <= 5) return <>Last sprint! Only <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> left. 🎉</>;
+                                        if (remaining <= 10) return <>Great pace! <span style={{ color: '#fcd34d' }}>{remaining}</span> to go. Keep it up!</>;
+                                        return <>You have <span style={{ fontSize: '20px', color: '#fcd34d' }}>{remaining}</span> more to go today.</>;
+                                    })()}
                                 </div>
-                                <audio
-                                    ref={audioRef}
-                                    src={record.audio_link}
-                                    onEnded={() => setIsPlaying(false)}
-                                    style={{ width: '100%', height: '32px' }}
-                                    controls
-                                />
                             </div>
                         </div>
-
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                            <button onClick={() => skip(-10)} style={smallButtonStyle}>⏪ 10s</button>
-                            <button onClick={() => skip(10)} style={smallButtonStyle}>10s ⏩</button>
-                            <div style={{ flex: 1 }}></div>
-                            {[1, 1.5, 2].map(speed => (
-                                <button
-                                    key={speed}
-                                    onClick={() => {
-                                        setPlaybackRate(speed)
-                                        audioRef.current.playbackRate = speed
-                                    }}
-                                    style={{
-                                        ...smallButtonStyle,
-                                        background: playbackRate === speed ? '#4f46e5' : 'white',
-                                        color: playbackRate === speed ? 'white' : '#4a5568',
-                                        borderColor: playbackRate === speed ? '#4f46e5' : '#e2e8f0'
-                                    }}
-                                >
-                                    {speed}x
-                                </button>
-                            ))}
+                        <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '11px', fontWeight: '700', opacity: 0.8 }}>COMPLETED TODAY</div>
+                            <div style={{ fontSize: '18px', fontWeight: '900' }}>{stats.completedToday} / {profile?.daily_limit || 50}</div>
                         </div>
                     </div>
-                </div>
 
-                {/* Location Map */}
-                <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '15px', fontWeight: '600' }}>Location Verification</h3>
-                        <span style={{ fontSize: '11px', color: '#48bb78', fontWeight: '700' }}>● GPS ENABLED</span>
-                    </div>
-                    <div style={{ height: '260px', borderRadius: '8px', overflow: 'hidden', background: '#e2e8f0', border: '1px solid #edf2f7' }}>
-                        {record.location ? (() => {
-                            const [lat, lng] = record.location.split(',').map(s => parseFloat(s.trim()))
-                            return <MapPreview lat={lat} lng={lng} />
-                        })() : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096' }}>No Location Data</div>}
-                    </div>
-                </div>
-            </div>
+                    <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: '700' }}>Contact Preview</h2>
+                            <span style={{ fontSize: '11px', color: '#718096', fontWeight: '600', background: '#f7fafc', padding: '2px 8px', borderRadius: '4px' }}>
+                                ID: {record.contact_id}
+                            </span>
+                        </div>
 
-            {/* Right Column: Questions */}
-            <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'sticky', top: '20px' }}>
-                <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#1a202c', marginBottom: '15px', borderBottom: '2px solid #ebf4ff', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Audit Checklist
-                </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', fontSize: '13px' }}>
+                            <div style={infoBoxStyle}><label style={labelStyle}>Campaign</label>{record.campaign_name}</div>
+                            <div style={infoBoxStyle}><label style={labelStyle}>Date</label>{record.contact_date}</div>
+                            <div style={infoBoxStyle}><label style={labelStyle}>Duration</label>{record.duration}</div>
+                            <div style={infoBoxStyle}><label style={labelStyle}>Outlet</label>{record.outlet_name || 'N/A'}</div>
+                        </div>
 
-                <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 220px)', paddingRight: '5px' }}>
-                    {questions.map((q, idx) => (
-                        <div key={q.id} style={{ marginBottom: '20px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: '700', color: '#2d3748', marginBottom: '8px', lineHeight: '1.4' }}>
-                                {idx + 1}. {q.question_text}
-                            </p>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {q.answer_options.map(opt => (
+                        <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #edf2f7' }} />
+
+                        {/* Audio Player UI - More Compact */}
+                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                <button onClick={togglePlay} style={playButtonStyle}>
+                                    {isPlaying ? '⏸' : '▶'}
+                                </button>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                        <span style={{ fontSize: '11px', color: '#4a5568', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Audio Review</span>
+                                        <span style={{ fontSize: '11px', color: '#a0aec0' }}>{playbackRate}x Speed</span>
+                                    </div>
+                                    <audio
+                                        ref={audioRef}
+                                        src={record.audio_link}
+                                        onEnded={() => setIsPlaying(false)}
+                                        style={{ width: '100%', height: '32px' }}
+                                        controls
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                <button onClick={() => skip(-10)} style={smallButtonStyle}>⏪ 10s</button>
+                                <button onClick={() => skip(10)} style={smallButtonStyle}>10s ⏩</button>
+                                <div style={{ flex: 1 }}></div>
+                                {[1, 1.5, 2].map(speed => (
                                     <button
-                                        key={opt.id}
-                                        onClick={() => handleOptionSelect(q.id, opt.id)}
+                                        key={speed}
+                                        onClick={() => {
+                                            setPlaybackRate(speed)
+                                            audioRef.current.playbackRate = speed
+                                        }}
                                         style={{
-                                            padding: '6px 10px',
-                                            fontSize: '11px',
-                                            borderRadius: '6px',
-                                            border: '1px solid',
-                                            borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
-                                            background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
-                                            color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
-                                            fontWeight: answers[q.id] === opt.id ? '700' : '500',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (answers[q.id] !== opt.id) {
-                                                e.currentTarget.style.borderColor = '#4f46e5'
-                                                e.currentTarget.style.background = '#f8fafc'
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (answers[q.id] !== opt.id) {
-                                                e.currentTarget.style.borderColor = '#e2e8f0'
-                                                e.currentTarget.style.background = 'white'
-                                            }
+                                            ...smallButtonStyle,
+                                            background: playbackRate === speed ? '#4f46e5' : 'white',
+                                            color: playbackRate === speed ? 'white' : '#4a5568',
+                                            borderColor: playbackRate === speed ? '#4f46e5' : '#e2e8f0'
                                         }}
                                     >
-                                        {opt.option_text}
+                                        {speed}x
                                     </button>
                                 ))}
                             </div>
                         </div>
-                    ))}
+                    </div>
+
+                    {/* Location Map */}
+                    <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: '600' }}>Location Verification</h3>
+                            <span style={{ fontSize: '11px', color: '#48bb78', fontWeight: '700' }}>● GPS ENABLED</span>
+                        </div>
+                        <div style={{ height: '260px', borderRadius: '8px', overflow: 'hidden', background: '#e2e8f0', border: '1px solid #edf2f7' }}>
+                            {record.location ? (() => {
+                                const [lat, lng] = record.location.split(',').map(s => parseFloat(s.trim()))
+                                return <MapPreview lat={lat} lng={lng} />
+                            })() : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096' }}>No Location Data</div>}
+                        </div>
+                    </div>
                 </div>
 
-                <button
-                    onClick={handleSubmit}
-                    disabled={submitting || Object.keys(answers).length < questions.length}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        marginTop: '15px',
-                        background: (submitting || Object.keys(answers).length < questions.length) ? '#e2e8f0' : 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '800',
-                        fontSize: '14px',
-                        cursor: (submitting || Object.keys(answers).length < questions.length) ? 'not-allowed' : 'pointer',
-                        boxShadow: (submitting || Object.keys(answers).length < questions.length) ? 'none' : '0 10px 15px -3px rgba(72, 187, 120, 0.3)',
-                        transition: 'transform 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!submitting && Object.keys(answers).length >= questions.length) {
-                            e.currentTarget.style.transform = 'translateY(-2px)'
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                    }}
-                >
-                    {submitting ? 'Submitting...' : 'COMPLETE & NEXT ➔'}
-                </button>
-            </div>
+                {/* Right Column: Questions */}
+                <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'sticky', top: '20px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#1a202c', marginBottom: '15px', borderBottom: '2px solid #ebf4ff', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        Audit Checklist
+                    </h3>
 
+                    <div style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 220px)', paddingRight: '5px' }}>
+                        {questions.map((q, idx) => (
+                            <div key={q.id} style={{ marginBottom: '20px' }}>
+                                <p style={{ fontSize: '13px', fontWeight: '700', color: '#2d3748', marginBottom: '8px', lineHeight: '1.4' }}>
+                                    {idx + 1}. {q.question_text}
+                                </p>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                    {q.answer_options.map(opt => (
+                                        <button
+                                            key={opt.id}
+                                            onClick={() => handleOptionSelect(q.id, opt.id)}
+                                            style={{
+                                                padding: '6px 10px',
+                                                fontSize: '11px',
+                                                borderRadius: '6px',
+                                                border: '1px solid',
+                                                borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
+                                                background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
+                                                color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
+                                                fontWeight: answers[q.id] === opt.id ? '700' : '500',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (answers[q.id] !== opt.id) {
+                                                    e.currentTarget.style.borderColor = '#4f46e5'
+                                                    e.currentTarget.style.background = '#f8fafc'
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (answers[q.id] !== opt.id) {
+                                                    e.currentTarget.style.borderColor = '#e2e8f0'
+                                                    e.currentTarget.style.background = 'white'
+                                                }
+                                            }}
+                                        >
+                                            {opt.option_text}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={handleSubmit}
+                        disabled={submitting || Object.keys(answers).length < questions.length}
+                        style={{
+                            width: '100%',
+                            padding: '12px',
+                            marginTop: '15px',
+                            background: (submitting || Object.keys(answers).length < questions.length) ? '#e2e8f0' : 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '800',
+                            fontSize: '14px',
+                            cursor: (submitting || Object.keys(answers).length < questions.length) ? 'not-allowed' : 'pointer',
+                            boxShadow: (submitting || Object.keys(answers).length < questions.length) ? 'none' : '0 10px 15px -3px rgba(72, 187, 120, 0.3)',
+                            transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!submitting && Object.keys(answers).length >= questions.length) {
+                                e.currentTarget.style.transform = 'translateY(-2px)'
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                        }}
+                    >
+                        {submitting ? 'Submitting...' : 'COMPLETE & NEXT ➔'}
+                    </button>
+                </div>
+
+            </div>
         </div>
     )
 }
