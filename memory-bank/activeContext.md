@@ -5,13 +5,12 @@
 The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
+- **Soft Dark Mode**: Implemented a premium auditor-only dark theme (Slate-based) with persistent storage and a dedicated toggle in the header.
+- **Tactile Feedback**: Enhanced audio player skip buttons and submission buttons with tactile `onMouseDown/onMouseUp` animations for a physical interaction feel.
+- **UI Stability**: Removed hover-based animations from interactive buttons to reduce visual noise and improve workflow stability.
 - **Phase 11: High-Scale Optimization**: Fully implemented the "Global Queue" pull model, removing manual assignment bottlenecks.
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
-- **Auditor Dashboard**: Added "Completed This Month" tracking with custom "5th-day reset" logic to match business reporting cycles.
-- **Metrics**: Integrated real-time counting of Available, Claimed, and Completed records in the Admin view.
-- **Admin Dashboard**: Fixed Inventory Summary to group by **Record Date** (from CSV) instead of System Upload Date for better inventory tracking.
-- **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards while maintaining database referential integrity.
-- **Security**: Hardened Row Level Security (RLS) policies to support the self-service claiming mechanism.
+- **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards.
 
 ## Current Objectives
 - [x] All core v2.0 phases completed.

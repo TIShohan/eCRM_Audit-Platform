@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import MapPreview from '../../components/MapPreview'
 
 export default function AuditInterface() {
     const { user, profile } = useAuth()
+    const { isDark } = useOutletContext()
     const navigate = useNavigate()
     const audioRef = useRef(null)
 
@@ -358,10 +359,10 @@ export default function AuditInterface() {
                         </div>
                     </div>
 
-                    <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginBottom: '20px', border: '1px solid var(--border-color)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: '700' }}>Contact Preview</h2>
-                            <span style={{ fontSize: '11px', color: '#718096', fontWeight: '600', background: '#f7fafc', padding: '2px 8px', borderRadius: '4px' }}>
+                            <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>Contact Preview</h2>
+                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', background: 'var(--bg-color)', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
                                 ID: {record.contact_id}
                             </span>
                         </div>
@@ -373,10 +374,10 @@ export default function AuditInterface() {
                             <div style={infoBoxStyle}><label style={labelStyle}>Outlet</label>{record.outlet_name || 'N/A'}</div>
                         </div>
 
-                        <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid #edf2f7' }} />
+                        <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
 
                         {/* Audio Player UI - More Compact */}
-                        <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ background: 'var(--bg-color)', padding: '15px', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                 <button onClick={togglePlay} style={playButtonStyle}>
                                     {isPlaying ? '⏸' : '▶'}
@@ -402,11 +403,11 @@ export default function AuditInterface() {
                                     style={skipButtonStyle}
                                     onMouseDown={(e) => {
                                         e.currentTarget.style.transform = 'translateY(1px) scale(0.97)';
-                                        e.currentTarget.style.background = '#f1f5f9';
+                                        e.currentTarget.style.background = 'var(--border-color)';
                                     }}
                                     onMouseUp={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                        e.currentTarget.style.background = 'white';
+                                        e.currentTarget.style.background = 'var(--surface-color)';
                                     }}
                                 >
                                     ⏪ 10s Backward
@@ -416,11 +417,11 @@ export default function AuditInterface() {
                                     style={skipButtonStyle}
                                     onMouseDown={(e) => {
                                         e.currentTarget.style.transform = 'translateY(1px) scale(0.97)';
-                                        e.currentTarget.style.background = '#f1f5f9';
+                                        e.currentTarget.style.background = 'var(--border-color)';
                                     }}
                                     onMouseUp={(e) => {
                                         e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                        e.currentTarget.style.background = 'white';
+                                        e.currentTarget.style.background = 'var(--surface-color)';
                                     }}
                                 >
                                     10s Forward ⏩
@@ -435,9 +436,9 @@ export default function AuditInterface() {
                                         }}
                                         style={{
                                             ...smallButtonStyle,
-                                            background: playbackRate === speed ? '#4f46e5' : 'white',
-                                            color: playbackRate === speed ? 'white' : '#4a5568',
-                                            borderColor: playbackRate === speed ? '#4f46e5' : '#e2e8f0'
+                                            background: playbackRate === speed ? '#4f46e5' : 'var(--surface-color)',
+                                            color: playbackRate === speed ? 'white' : 'var(--text-primary)',
+                                            borderColor: playbackRate === speed ? '#4f46e5' : 'var(--border-color)'
                                         }}
                                     >
                                         {speed}x
@@ -448,23 +449,23 @@ export default function AuditInterface() {
                     </div>
 
                     {/* Location Map */}
-                    <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                            <h3 style={{ fontSize: '15px', fontWeight: '600' }}>Location Verification</h3>
+                            <h3 style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text-primary)' }}>Location Verification</h3>
                             <span style={{ fontSize: '11px', color: '#48bb78', fontWeight: '700' }}>● GPS ENABLED</span>
                         </div>
-                        <div style={{ height: '180px', borderRadius: '8px', overflow: 'hidden', background: '#e2e8f0', border: '1px solid #edf2f7' }}>
+                        <div style={{ height: '180px', borderRadius: '8px', overflow: 'hidden', background: 'var(--bg-color)', border: '1px solid var(--border-color)' }}>
                             {record.location ? (() => {
                                 const [lat, lng] = record.location.split(',').map(s => parseFloat(s.trim()))
                                 return <MapPreview lat={lat} lng={lng} />
-                            })() : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#718096' }}>No Location Data</div>}
+                            })() : <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>No Location Data</div>}
                         </div>
                     </div>
                 </div>
 
                 {/* Right Column: Questions */}
-                <div style={{ background: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'sticky', top: '20px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#1a202c', marginBottom: '15px', borderBottom: '2px solid #ebf4ff', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ background: 'var(--surface-color)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'sticky', top: '20px', border: '1px solid var(--border-color)' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '15px', borderBottom: '2px solid var(--border-color)', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         Audit Checklist
                     </h3>
 
@@ -478,18 +479,18 @@ export default function AuditInterface() {
                             const isSkipped = isSkipOption && idx > 0;
                             return (
                                 <div key={q.id} style={{
-                                    background: isSkipped ? '#f1f5f9' : '#f8fafc',
+                                    background: isSkipped ? 'var(--bg-color)' : 'var(--bg-color)',
                                     padding: '12px',
                                     borderRadius: '10px',
-                                    border: '1px solid #edf2f7',
+                                    border: '1px solid var(--border-color)',
                                     display: 'flex',
                                     flexDirection: 'column',
-                                    opacity: isSkipped ? 0.5 : 1,
+                                    opacity: isSkipped ? 0.4 : 1,
                                     pointerEvents: isSkipped ? 'none' : 'auto',
                                     filter: isSkipped ? 'grayscale(1)' : 'none',
                                     transition: 'all 0.3s ease'
                                 }}>
-                                    <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a202c', marginBottom: '8px', lineHeight: '1.4' }}>
+                                    <p style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px', lineHeight: '1.4' }}>
                                         {idx + 1}. {q.question_text}
                                     </p>
                                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: 'auto' }}>
@@ -504,9 +505,9 @@ export default function AuditInterface() {
                                                     fontSize: '12px',
                                                     borderRadius: '8px',
                                                     border: '1px solid',
-                                                    borderColor: answers[q.id] === opt.id ? '#4f46e5' : '#e2e8f0',
-                                                    background: answers[q.id] === opt.id ? '#ebf4ff' : 'white',
-                                                    color: answers[q.id] === opt.id ? '#4f46e5' : '#4a5568',
+                                                    borderColor: answers[q.id] === opt.id ? '#4f46e5' : 'var(--border-color)',
+                                                    background: answers[q.id] === opt.id ? (isDark ? 'rgba(79, 70, 229, 0.2)' : '#ebf4ff') : 'var(--surface-color)',
+                                                    color: answers[q.id] === opt.id ? (isDark ? '#818cf8' : '#4f46e5') : 'var(--text-primary)',
                                                     fontWeight: answers[q.id] === opt.id ? '700' : '500',
                                                     cursor: 'pointer',
                                                     transition: 'all 0.2s',
@@ -515,13 +516,13 @@ export default function AuditInterface() {
                                                 onMouseEnter={(e) => {
                                                     if (answers[q.id] !== opt.id) {
                                                         e.currentTarget.style.borderColor = '#4f46e5'
-                                                        e.currentTarget.style.background = '#f8fafc'
+                                                        e.currentTarget.style.background = 'var(--bg-color)'
                                                     }
                                                 }}
                                                 onMouseLeave={(e) => {
                                                     if (answers[q.id] !== opt.id) {
-                                                        e.currentTarget.style.borderColor = '#e2e8f0'
-                                                        e.currentTarget.style.background = 'white'
+                                                        e.currentTarget.style.borderColor = 'var(--border-color)'
+                                                        e.currentTarget.style.background = 'var(--surface-color)'
                                                     }
                                                 }}
                                             >
@@ -576,10 +577,10 @@ export default function AuditInterface() {
 }
 
 const infoBoxStyle = {
-    background: '#f8fafc',
+    background: 'var(--bg-color)',
     padding: '10px 15px',
     borderRadius: '6px',
-    border: '1px solid #edf2f7'
+    border: '1px solid var(--border-color)'
 }
 
 const labelStyle = {
@@ -587,7 +588,7 @@ const labelStyle = {
     fontSize: '10px',
     fontWeight: '800',
     textTransform: 'uppercase',
-    color: '#a0aec0',
+    color: 'var(--text-secondary)',
     marginBottom: '2px'
 }
 
@@ -611,9 +612,9 @@ const smallButtonStyle = {
     fontSize: '12px',
     fontWeight: '600',
     borderRadius: '4px',
-    border: '1px solid #e2e8f0',
-    background: 'white',
-    color: '#4a5568',
+    border: '1px solid var(--border-color)',
+    background: 'var(--surface-color)',
+    color: 'var(--text-primary)',
     cursor: 'pointer'
 }
 
@@ -622,8 +623,8 @@ const skipButtonStyle = {
     fontSize: '12px',
     fontWeight: '700',
     borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    background: 'white',
+    border: '1px solid var(--border-color)',
+    background: 'var(--surface-color)',
     color: '#4f46e5',
     cursor: 'pointer',
     transition: 'all 0.2s',

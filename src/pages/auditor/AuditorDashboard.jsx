@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 
 export default function AuditorDashboard() {
     const { user, profile } = useAuth()
+    const { isDark } = useOutletContext()
     const navigate = useNavigate()
     const [stats, setStats] = useState({
         assigned: 0,
@@ -97,16 +98,16 @@ export default function AuditorDashboard() {
     return (
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '40px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1a202c', marginBottom: '10px' }}>
+                <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px' }}>
                     Welcome back, {profile?.full_name || 'Auditor'}
                 </h1>
-                <p style={{ color: '#718096' }}>
+                <p style={{ color: 'var(--text-secondary)' }}>
                     Queue is waiting. You have {Math.max(0, (profile?.daily_limit || 0) - stats.todayCompleted)} audits left in your daily quota.
                 </p>
             </div>
 
             {loading ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: '#718096' }}>Loading metrics...</div>
+                <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading metrics...</div>
             ) : (
                 <>
                     {/* Metric Cards */}
@@ -134,31 +135,32 @@ export default function AuditorDashboard() {
 
                     {/* Start Action */}
                     <div style={{
-                        background: 'white',
+                        background: 'var(--surface-color)',
                         padding: '50px',
                         borderRadius: '12px',
                         boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
                         textAlign: 'center',
-                        border: isOverLimit ? '2px solid #feb2b2' : 'none'
+                        border: isOverLimit ? '2px solid #ef4444' : '1px solid var(--border-color)',
+                        transition: 'all 0.3s ease'
                     }}>
                         {isOverLimit ? (
                             <div>
                                 <div style={{ fontSize: '40px', marginBottom: '15px' }}>🛑</div>
-                                <h2 style={{ fontSize: '22px', borderBottom: 'none' }}>Daily Limit Reached</h2>
-                                <p style={{ color: '#718096', marginBottom: '0' }}>
+                                <h2 style={{ fontSize: '22px', borderBottom: 'none', color: 'var(--text-primary)' }}>Daily Limit Reached</h2>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '0' }}>
                                     You have completed {stats.todayCompleted} audits today. Please come back tomorrow or contact your admin.
                                 </p>
                             </div>
                         ) : (stats.globalAvailable === 0 && (stats.assigned - stats.completed) === 0) ? (
                             <div>
                                 <div style={{ fontSize: '40px', marginBottom: '15px' }}>🎉</div>
-                                <h2 style={{ fontSize: '22px', borderBottom: 'none' }}>System Queue Empty</h2>
-                                <p style={{ color: '#718096', marginBottom: '0' }}>There are currently no records available for auditing.</p>
+                                <h2 style={{ fontSize: '22px', borderBottom: 'none', color: 'var(--text-primary)' }}>System Queue Empty</h2>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '0' }}>There are currently no records available for auditing.</p>
                             </div>
                         ) : (
                             <div>
-                                <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '15px' }}>Ready to start auditing?</h2>
-                                <p style={{ color: '#718096', marginBottom: '30px' }}>The system will pull the next available record for you.</p>
+                                <h2 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '15px', color: 'var(--text-primary)' }}>Ready to start auditing?</h2>
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>The system will pull the next available record for you.</p>
                                 <button
                                     onClick={() => navigate('/auditor/audit')}
                                     style={{
@@ -190,19 +192,22 @@ export default function AuditorDashboard() {
 function MetricCard({ label, value, limit, icon, color = '#4f46e5' }) {
     return (
         <div className="card" style={{
-            background: 'white',
+            background: 'var(--surface-color)',
             padding: '24px',
             borderRadius: '12px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
             borderTop: `4px solid ${color}`,
+            borderBottom: '1px solid var(--border-color)',
+            borderLeft: '1px solid var(--border-color)',
+            borderRight: '1px solid var(--border-color)',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                    <p style={{ fontSize: '13px', color: '#718096', fontWeight: '600', marginBottom: '5px' }}>{label}</p>
-                    <p style={{ fontSize: '28px', fontWeight: '800', color: '#1a202c' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600', marginBottom: '5px' }}>{label}</p>
+                    <p style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)' }}>
                         {value}
-                        {limit && <span style={{ fontSize: '14px', color: '#a0aec0', fontWeight: '400' }}> / {limit}</span>}
+                        {limit && <span style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: '400', opacity: 0.6 }}> / {limit}</span>}
                     </p>
                 </div>
                 <span style={{ fontSize: '24px' }}>{icon}</span>

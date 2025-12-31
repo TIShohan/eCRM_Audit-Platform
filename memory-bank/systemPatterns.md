@@ -49,6 +49,13 @@ Admin Reporting → PostgreSQL Views → CSV Export (Aggregated Metrics)
 - Monthly completion metrics carry over until the **5th day** of the following month.
 - This logic is encapsulated in the metrics-fetching functions to align with monthly performance reporting deadlines.
 
+### 6. Dynamic Theming Pattern (Auditor Exclusive)
+**CSS Variable Context Injection**
+- The system uses a specialized `AuditorLayout` that manages a `isDark` state.
+- **Contextual Styling**: Colors are defined as CSS variables (`--bg-color`, `--surface-color`) in `index.css`.
+- **State Propagation**: Theme state is persisted in `localStorage` and passed to child components via React Router's `Outlet` context, allowing dynamic adaptation of cards, maps, and forms.
+- **Global Injection**: The theme class is injected directly into `document.body` to ensure 100% screen coverage without browser margin artifacts.
+
 ## Component Architecture
 
 ### Core Modules

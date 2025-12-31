@@ -4,19 +4,42 @@
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #1a202c;
-  background-color: #f7fafc;
-  --glass: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --primary: #4f46e5;
-  --secondary: #6366f1;
+
+  /* Light Theme Variables */
+  --bg-color: #f7fafc;
+  --surface-color: #ffffff;
+  --text-primary: #1a202c;
+  --text-secondary: #718096;
+  --border-color: #edf2f7;
+  --primary-color: #4f46e5;
+  --accent-color: #7c3aed;
 }
 
+.auditor-dark {
+  /* Soft Dark Mode Palette */
+  --bg-color: #0f172a;
+  /* Slate 900 */
+  --surface-color: #1e293b;
+  /* Slate 800 */
+  --text-primary: #f1f5f9;
+  /* Slate 100 */
+  --text-secondary: #94a3b8;
+  /* Slate 400 */
+  --border-color: #334155;
+  /* Slate 700 */
+}
+
+html,
 body {
   margin: 0;
   padding: 0;
+  background-color: var(--bg-color);
+}
+
+body {
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh;
-  width: 100%;
 }
 
 * {
