@@ -43,41 +43,96 @@ export default function Reports() {
                 return
             }
 
-            // 2. Format data for CSV
+            // 2. Fetch ALL questions to establish canonical order, but filter by relevance
+            const { data: allQuestionsData, error: qError } = await supabase
+                .from('questions')
+                .select('question_text, order_index, question_type, campaign_id')
+                .order('order_index', { ascending: true })
+
+            if (qError) throw qError
+
+            // Identify active campaigns in this specific export dataset
+            const activeCampaignIds = new Set(data.map(d => d.campaign_id))
+
+            // Create a Set of "Active" questions from the master list
+            // Filter: Include if commonly applicable OR if the campaign is in our current dataset
+            const masterQuestionList = allQuestionsData
+                .filter(q => q.question_type === 'common' || activeCampaignIds.has(q.campaign_id))
+                .map(q => q.question_text)
+
+            // 3. Identify any "Legacy" questions that might exist in the data but were deleted from the master list
+            // (Only relevant if questions were hard-deleted but responses remain - rare but possible if cascading is off)
+            const legacyQuestions = new Set()
+            data.forEach(record => {
+                if (record.responses) {
+                    record.responses.forEach(resp => {
+                        const qText = resp.question?.question_text
+                        if (qText && !masterQuestionList.includes(qText)) {
+                            legacyQuestions.add(qText)
+                        }
+                    })
+                }
+            })
+
+            // Combine Master List (Ordered) + Legacy Questions (Appended at end)
+            // This ensures Admin's order is respected 100% for active questions
+            const sortedQuestions = [...masterQuestionList, ...Array.from(legacyQuestions).sort()]
+
+            // 4. Format data for CSV
             const formattedData = data.map(record => {
+                // Base fields
                 const row = {
-                    'Contact_id': record.contact_id,
-                    'Contact_Date': record.contact_date,
-                    'Region': record.assigned_region,
-                    'Area': record.assigned_area,
-                    'Territory': record.assigned_territory,
-                    'House': record.assigned_house,
-                    'Point': record.assigned_point,
-                    'Auditee_ID': record.auditee_id,
-                    'Auditee_Name': record.auditee_name,
-                    'Outlet': record.outlet_name,
-                    'Route': record.route,
-                    'Cluster': record.cluster,
-                    'Campaign': record.campaign_name,
-                    'Audio_Link': record.audio_link,
-                    'Duration': record.duration,
+                    'Contact_id': record.contact_id || '',
+                    'Contact_Date': record.contact_date || '',
+                    'Region': record.assigned_region || '',
+                    'Area': record.assigned_area || '',
+                    'Territory': record.assigned_territory || '',
+                    'House': record.assigned_house || '',
+                    'Point': record.assigned_point || '',
+                    'Auditee_ID': record.auditee_id || '',
+                    'Auditee_Name': record.auditee_name || '',
+                    'Outlet': record.outlet_name || '',
+                    'Route': record.route || '',
+                    'Cluster': record.cluster || '',
+                    'Campaign': record.campaign_name || '',
+                    'Audio_Link': record.audio_link || '',
+                    'Duration': record.duration || '',
                     'Auditor': record.auditor?.email || 'Unassigned',
-                    'Completed_At': new Date(record.completed_at).toLocaleString()
+                    'Completed_At': record.completed_at ? new Date(record.completed_at).toLocaleString() : ''
                 }
 
-                // Add each response as a column
-                record.responses.forEach(resp => {
-                    const questionText = resp.question.question_text
-                    row[questionText] = resp.option.option_text
+                // Initialize all dynamic question columns to empty string (ensures header consistency)
+                sortedQuestions.forEach(qText => {
+                    row[qText] = ''
                 })
+
+                // Fill in specific answers
+                if (record.responses) {
+                    record.responses.forEach(resp => {
+                        const questionText = resp.question?.question_text
+                        const answerText = resp.option?.option_text || ''
+                        if (questionText) {
+                            row[questionText] = answerText
+                        }
+                    })
+                }
 
                 return row
             })
 
-            // 3. Convert to CSV using PapaParse
-            const csv = Papa.unparse(formattedData)
+            // 4. Convert to CSV using PapaParse
+            // We explicitly define columns to ensure order: Fixed Columns + Sorted Question Columns
+            const fixedColumns = [
+                'Contact_id', 'Contact_Date', 'Region', 'Area', 'Territory', 'House', 'Point',
+                'Auditee_ID', 'Auditee_Name', 'Outlet', 'Route', 'Cluster', 'Campaign',
+                'Audio_Link', 'Duration', 'Auditor', 'Completed_At'
+            ]
 
-            // 4. Trigger download
+            const csv = Papa.unparse(formattedData, {
+                columns: [...fixedColumns, ...sortedQuestions]
+            })
+
+            // 5. Trigger download
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
             const link = document.createElement('a')
             const url = URL.createObjectURL(blob)
@@ -87,6 +142,7 @@ export default function Reports() {
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
+            URL.revokeObjectURL(url)
 
             setMessage({ text: `Success! Exported ${data.length} records. Check your downloads folder.`, type: 'success' })
         } catch (err) {
