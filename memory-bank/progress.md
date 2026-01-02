@@ -17,6 +17,9 @@ The foundation tool for single-user CSV auditing is fully operational.
 - **UI Stability**: Removed hover-based animations from interactive buttons to reduce visual noise and improve workflow stability.
 - **Phase 11: High-Scale Optimization**: Fully implemented the "Global Queue" pull model, removing manual assignment bottlenecks.
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
-- **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards.
+### Recent Maintenance (Reliability & UX)
+- **Report Reliability**: Fixed CSV export bug (missing columns), added Legacy Question support, and `Campaign_ID`.
+- **Data Ingestion**: Standardized all CSV uploads to `YYYY-MM-DD` to prevent date reporting errors.
+- **Reporting UX**: Added "Quick Select Month" and forced chronological sorting by `Completed_At`.
 
-**Resume Command for Next Agent**: "Project is 100% Production Ready. Features Auditor Soft Dark Mode and a high-performance Pull-based Global Queue. Admin Dashboard is grouped by Record Date. Review @database-schema.md for architecture details."
+**Resume Command for Next Agent**: "Project is 100% Production Ready. Report system is now strictly reliable with standardized dates and legacy handling. Review @activeContext.md for recent Data Management updates."

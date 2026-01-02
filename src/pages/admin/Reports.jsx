@@ -20,6 +20,8 @@ export default function Reports() {
             setMessage({ text: 'Compiling large dataset and flattening responses...', type: 'info' })
 
             // 1. Fetch completed audit data within range
+            // CHANGED: Filtering by 'contact_date' to match Inventory Dashboard (Campaign View)
+            // This aligns better with "Campaign Reports" vs "Productivity Reports"
             const { data, error } = await supabase
                 .from('audit_data')
                 .select(`
@@ -33,13 +35,14 @@ export default function Reports() {
           )
         `)
                 .eq('status', 'completed')
-                .gte('completed_at', `${startDate}T00:00:00`)
-                .lte('completed_at', `${endDate}T23:59:59`)
+                .gte('contact_date', startDate) // Assumes YYYY-MM-DD format in DB
+                .lte('contact_date', endDate)
+                .order('completed_at', { ascending: true })
 
             if (error) throw error
 
             if (!data || data.length === 0) {
-                setMessage({ text: 'Zero results found for the selected timeline. Adjust dates and try again.', type: 'error' })
+                setMessage({ text: `Zero results found for Contact Dates between ${startDate} and ${endDate}. Ensure your CSV dates use YYYY-MM-DD format.`, type: 'error' })
                 return
             }
 
@@ -174,6 +177,36 @@ export default function Reports() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
                         <div style={{ width: '12px', height: '12px', background: '#4f46e5', borderRadius: '50%' }}></div>
                         <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Configure Export Timeline</h2>
+                    </div>
+
+                    <div style={{ marginBottom: '30px', padding: '20px', background: '#f0f9ff', borderRadius: '12px', border: '1px solid #bae6fd' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                            <span style={{ fontSize: '18px' }}>🚀</span>
+                            <label style={{ ...labelStyle, marginBottom: 0, color: '#0369a1' }}>Quick Select: Download Whole Month</label>
+                        </div>
+                        <input
+                            type="month"
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    const [year, month] = e.target.value.split('-')
+                                    const firstDay = `${year}-${month}-01`
+                                    // Calculate last day of month
+                                    const lastDayDate = new Date(year, month, 0)
+                                    const lastDay = `${year}-${month}-${lastDayDate.getDate()}`
+
+                                    setStartDate(firstDay)
+                                    setEndDate(lastDay)
+                                    setMessage({ text: `Set range for entire month of ${new Date(year, month - 1).toLocaleString('default', { month: 'long' })} ${year}`, type: 'info' })
+                                }
+                            }}
+                            style={{ ...inputStyle, background: 'white', borderColor: '#bae6fd', color: '#0284c7' }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
+                        <div style={{ height: '1px', background: '#e2e8f0', flex: 1 }}></div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' }}>OR Custom Range</span>
+                        <div style={{ height: '1px', background: '#e2e8f0', flex: 1 }}></div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '40px' }}>

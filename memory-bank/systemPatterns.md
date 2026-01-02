@@ -10,13 +10,13 @@
 ### Data Flow Architecture (v2.0 Pull Model)
 
 ```
-Admin CSV Upload → Supabase audit_data (assigned_to: NULL)
+Admin CSV Upload → Date Standardization (YYYY-MM-DD) → Supabase audit_data (assigned_to: NULL)
       ↓
 Auditor Dashboard → Pull Next Available (UPDATE assigned_to: auth.uid())
       ↓
 Audit Interface → Capture Responses → Supabase audit_responses
       ↓
-Admin Reporting → PostgreSQL Views → CSV Export (Aggregated Metrics)
+Admin Reporting → Reliable CSV Export (Canonical Questions + Legacy Handling)
 ```
 
 ## Key Design Patterns

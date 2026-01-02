@@ -5,6 +5,9 @@
 The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
+- **Data Ingestion Standard**: Implemented strict date standardization during upload (`standardDate` helper) to normalize mixed CSV formats (UD/Intl) to `YYYY-MM-DD`.
+- **Report Reliability**: Rewrote CSV key generation to scan all questions, preventing data loss. Added `Campaign_ID`, legacy question handling, and strictly ordered by `Completed_At`.
+- **Admin UX**: Added "Quick Select: Whole Month" to Reports page for one-click exports.
 - **Soft Dark Mode**: Implemented a premium auditor-only dark theme (Slate-based) with persistent storage and a dedicated toggle in the header.
 - **Tactile Feedback**: Enhanced audio player skip buttons and submission buttons with tactile `onMouseDown/onMouseUp` animations for a physical interaction feel.
 - **UI Stability**: Removed hover-based animations from interactive buttons to reduce visual noise and improve workflow stability.

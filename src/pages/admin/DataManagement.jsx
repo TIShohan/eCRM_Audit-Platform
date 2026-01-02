@@ -25,6 +25,46 @@ export default function DataManagement() {
             skipEmptyLines: true,
             complete: async (results) => {
                 try {
+                    // Helper to standardize dates to YYYY-MM-DD
+                    const standardDate = (dateStr) => {
+                        if (!dateStr) return null;
+
+                        // Already ISO (YYYY-MM-DD)
+                        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
+
+                        const parts = dateStr.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+                        if (parts) {
+                            const n1 = parseInt(parts[1], 10);
+                            const n2 = parseInt(parts[2], 10);
+                            const year = parts[3];
+
+                            // Rule 1: First number > 12? MUST be Day. Format is DD/MM/YYYY
+                            // Example: 20/07/2025 -> Day 20, Month 07
+                            if (n1 > 12) {
+                                return `${year}-${n2.toString().padStart(2, '0')}-${n1.toString().padStart(2, '0')}`;
+                            }
+
+                            // Rule 2: Second number > 12? MUST be Day. Format is MM/DD/YYYY
+                            // Example: 07/20/2025 -> Month 07, Day 20
+                            if (n2 > 12) {
+                                return `${year}-${n1.toString().padStart(2, '0')}-${n2.toString().padStart(2, '0')}`;
+                            }
+
+                            // Rule 3: Ambiguous (e.g. 05/07/2025)
+                            // User confirmed US Format (7/20/2025), so we default to MM/DD/YYYY
+                            // Example: 07/05/2025 -> Month 07, Day 05 (July 5th)
+                            return `${year}-${n1.toString().padStart(2, '0')}-${n2.toString().padStart(2, '0')}`;
+                        }
+
+                        // Attempt JS Parse
+                        const parsed = new Date(dateStr);
+                        if (!isNaN(parsed.getTime())) {
+                            return parsed.toISOString().split('T')[0];
+                        }
+
+                        return dateStr; // Return original if unknown format
+                    }
+
                     const rows = results.data.map(row => ({
                         assigned_region: row['Assigned_Region'],
                         assigned_area: row['Assigned_Area'],
@@ -37,7 +77,7 @@ export default function DataManagement() {
                         cluster: row['cluster'],
                         outlet_name: row['outlet'],
                         contact_id: row['Contact_id'],
-                        contact_date: row['Contact_Date'],
+                        contact_date: standardDate(row['Contact_Date']), // CHANGED: Apply normalization
                         location: row['Contact_Location'],
                         audio_link: row['audio_links'],
                         start_time: row['Contact_Start_Time'],
