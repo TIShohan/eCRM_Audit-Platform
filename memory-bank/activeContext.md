@@ -17,6 +17,8 @@ The platform is currently in maintenance mode with all core v2.0 features implem
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
 - **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards.
 - **NPM Scripts**: Added `npm start` alias for `npm run dev` for standard deployment compatibility.
+- **High-Performance Pull**: Optimized auditor record "claiming" by moving logic from JS to an atomic SQL RPC function (`claim_audit_batch`). Reduced requests from 6 per pull to 1, utilizing `FOR UPDATE SKIP LOCKED` for high-concurrency safety.
+- **Database Optimization**: Added B-tree indexes on `status`, `assigned_to`, `contact_id`, and `campaign_id` to ensure sub-millisecond query performance at 100k+ scale.
 
 ## Current Objectives
 - [x] All core v2.0 phases completed.

@@ -64,64 +64,15 @@ export default function AuditInterface() {
                 return
             }
 
-            // 2. Buffer Management:
-            // Check how many pending records this auditor already has assigned
-            const { data: existingPending, error: existingError } = await supabase
-                .from('audit_data')
-                .select('*')
-                .eq('assigned_to', user.id)
-                .eq('status', 'pending')
-                .eq('is_archived', false)
-                .order('created_at', { ascending: true })
+            // 2. Optimized Buffer Management via RPC
+            // Instead of 3 separate requests, we call one atomic function
+            const { data: buffer, error: rpcError } = await supabase.rpc('claim_audit_batch', {
+                p_user_id: user.id,
+                p_batch_size: Math.min(5, (profile?.daily_limit || 50) - todayCount)
+            })
 
-            if (existingError) throw existingError
-
-            let currentRecord = existingPending?.[0]
-
-            // 3. If buffer is empty, pull a new BATCH of 5 random records
-            if (!currentRecord) {
-                // Get available count for random offset
-                const { count: availableCount } = await supabase
-                    .from('audit_data')
-                    .select('*', { count: 'exact', head: true })
-                    .is('assigned_to', null)
-                    .eq('status', 'pending')
-                    .eq('is_archived', false)
-
-                if (availableCount && availableCount > 0) {
-                    // Calculate how many we can pull (max 5, but don't exceed daily limit)
-                    const remainingQuota = (profile?.daily_limit || 50) - todayCount
-                    const batchSize = Math.min(5, availableCount, remainingQuota)
-
-                    if (batchSize > 0) {
-                        const randomIndex = Math.max(0, Math.floor(Math.random() * (availableCount - batchSize)))
-
-                        // Fetch the IDs of the records to claim
-                        const { data: batchToPull, error: pullError } = await supabase
-                            .from('audit_data')
-                            .select('id')
-                            .is('assigned_to', null)
-                            .eq('status', 'pending')
-                            .eq('is_archived', false)
-                            .range(randomIndex, randomIndex + batchSize - 1)
-
-                        if (pullError) throw pullError
-
-                        if (batchToPull && batchToPull.length > 0) {
-                            const ids = batchToPull.map(r => r.id)
-                            const { data: claimed, error: claimError } = await supabase
-                                .from('audit_data')
-                                .update({ assigned_to: user.id })
-                                .in('id', ids)
-                                .is('assigned_to', null) // Safety check: Only claim if still unassigned
-                                .select()
-
-                            if (claimError) throw claimError
-                            currentRecord = claimed[0]
-                        }
-                    }
-                }
-            }
+            if (rpcError) throw rpcError
+            let currentRecord = buffer?.[0]
 
             if (!currentRecord) {
                 setRecord(null)

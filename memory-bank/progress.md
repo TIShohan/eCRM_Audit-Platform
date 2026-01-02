@@ -24,5 +24,6 @@ The foundation tool for single-user CSV auditing is fully operational.
 - **Data Ingestion**: Standardized all CSV uploads to `YYYY-MM-DD` to prevent date reporting errors.
 - **Reporting UX**: Added "Quick Select Month" and forced chronological sorting by `Completed_At`.
 - **NPM Scripts**: Added `npm start` command for deployment compatibility.
+- **Performance Optimization**: Transitioned Auditor "Pull" logic from client-side sequential steps to an atomic DB-side RPC. Added critical database indexes for 100k+ record scale.
 
 **Resume Command for Next Agent**: "Project is 100% Production Ready. Duplicate prevention active. User Management robust (Soft Delete + Admin Protection). Reports reliable. Review @activeContext.md for system status."

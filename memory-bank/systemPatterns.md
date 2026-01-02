@@ -22,10 +22,11 @@ Admin Reporting → Reliable CSV Export (Canonical Questions + Legacy Handling)
 ## Key Design Patterns
 
 ### 1. Self-Service "Pull" Pattern
-**Global Queue Distribution**
-- Instead of manual assignment, the system uses a "Pull" mechanism.
-- Auditors request the next record; the system identifies the oldest `pending` record where `assigned_to` is `NULL`.
-- **Atomic Claiming**: Uses a single SQL UPDATE with a LIMIT/ORDER clause to prevent race conditions (one record per auditor).
+**Atomic Global Queue**
+- Instead of manual assignment, the system uses a high-concurrency "Pull" mechanism.
+- **RPC Logic**: Uses an atomic SQL function (`claim_audit_batch`) with `FOR UPDATE SKIP LOCKED`.
+- **Mechanism**: The auditor requests a batch (default 5); the database instantly locks and assigns the records, returning the updated batch in one request.
+- **Concurrency**: This prevents race conditions and significantly reduces database pressure by eliminating multiple client-side scans.
 
 ### 2. Role-Based Access Control (RBAC) Pattern
 **Context-Driven UI & Security**
