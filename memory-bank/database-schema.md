@@ -24,30 +24,30 @@ The global pool of records containing specialized eCRM metadata.
 - `contact_id` (TEXT, NOT NULL)
 - `campaign_id` (TEXT, NOT NULL)
 - `campaign_name` (TEXT)
-- `status` (TEXT, CHECK: 'pending' | 'in_progress' | 'completed')
+- `status` (TEXT, Default: 'pending', CHECK)
 - `assigned_to` (UUID, FK → user_profiles.id)
 - `is_archived` (BOOLEAN, Default: false)
 - `completed_at` (TIMESTAMPTZ)
 - **Metadata Fields:** `assigned_region`, `assigned_area`, `assigned_territory`, `assigned_house`, `assigned_point`, `auditee_id`, `auditee_name`, `route`, `cluster`, `outlet_name`, `contact_date`, `location`, `audio_link`, `start_time`, `end_time`, `duration`
-- `created_at` (TIMESTAMPTZ)
+- `created_at` (TIMESTAMPTZ, Default: now())
 
 ### 3. questions
 Audit evaluation criteria.
 - `id` (UUID, PK)
 - `question_text` (TEXT, NOT NULL)
-- `question_type` (TEXT, CHECK: 'common' | 'campaign')
+- `question_type` (TEXT, NOT NULL, CHECK: 'common' | 'campaign')
 - `campaign_id` (TEXT, NULLABLE)
-- `order_index` (INTEGER)
+- `order_index` (INTEGER, NOT NULL)
 - `is_active` (BOOLEAN, Default: true) - **Soft Delete Primary Factor**
-- `created_at` (TIMESTAMPTZ)
+- `created_at` (TIMESTAMPTZ, Default: now())
 
 ### 4. answer_options
 Predefined choices for questions.
 - `id` (UUID, PK)
 - `question_id` (UUID, FK → questions.id)
-- `option_text` (TEXT)
-- `order_index` (INTEGER)
-- `created_at` (TIMESTAMPTZ)
+- `option_text` (TEXT, NOT NULL)
+- `order_index` (INTEGER, NOT NULL)
+- `created_at` (TIMESTAMPTZ, Default: now())
 
 ### 5. audit_responses
 The junction table storing completed audit evaluations.
@@ -57,7 +57,7 @@ The junction table storing completed audit evaluations.
 - `answer_option_id` (UUID, FK → answer_options.id)
 - `auditor_id` (UUID, FK → user_profiles.id)
 - `question_text` (TEXT) - **Snapshot of text at time of audit**
-- `created_at` (TIMESTAMPTZ)
+- `created_at` (TIMESTAMPTZ, Default: now())
 
 ### 6. assignments (Legacy/Audit Trail)
 Used for tracking manual distribution history if applicable.
