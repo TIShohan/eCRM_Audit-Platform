@@ -94,6 +94,7 @@ export default function Reports() {
                     'Outlet': record.outlet_name || '',
                     'Route': record.route || '',
                     'Cluster': record.cluster || '',
+                    'Campaign_ID': record.campaign_id || '', // NEW: Added Campaign_ID
                     'Campaign': record.campaign_name || '',
                     'Audio_Link': record.audio_link || '',
                     'Duration': record.duration || '',
@@ -124,7 +125,7 @@ export default function Reports() {
             // We explicitly define columns to ensure order: Fixed Columns + Sorted Question Columns
             const fixedColumns = [
                 'Contact_id', 'Contact_Date', 'Region', 'Area', 'Territory', 'House', 'Point',
-                'Auditee_ID', 'Auditee_Name', 'Outlet', 'Route', 'Cluster', 'Campaign',
+                'Auditee_ID', 'Auditee_Name', 'Outlet', 'Route', 'Cluster', 'Campaign_ID', 'Campaign',
                 'Audio_Link', 'Duration', 'Auditor', 'Completed_At'
             ]
 
