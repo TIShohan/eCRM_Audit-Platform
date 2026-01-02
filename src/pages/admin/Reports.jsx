@@ -30,6 +30,7 @@ export default function Reports() {
           responses:audit_responses!audit_responses_audit_data_id_fkey(
             question_id,
             answer_option_id,
+            question_text,
             question:questions(question_text),
             option:answer_options(option_text)
           )
@@ -50,6 +51,7 @@ export default function Reports() {
             const { data: allQuestionsData, error: qError } = await supabase
                 .from('questions')
                 .select('question_text, order_index, question_type, campaign_id')
+                .eq('is_active', true)
                 .order('order_index', { ascending: true })
 
             if (qError) throw qError
@@ -69,7 +71,7 @@ export default function Reports() {
             data.forEach(record => {
                 if (record.responses) {
                     record.responses.forEach(resp => {
-                        const qText = resp.question?.question_text
+                        const qText = resp.question_text || resp.question?.question_text
                         if (qText && !masterQuestionList.includes(qText)) {
                             legacyQuestions.add(qText)
                         }
@@ -113,7 +115,7 @@ export default function Reports() {
                 // Fill in specific answers
                 if (record.responses) {
                     record.responses.forEach(resp => {
-                        const questionText = resp.question?.question_text
+                        const questionText = resp.question_text || resp.question?.question_text
                         const answerText = resp.option?.option_text || ''
                         if (questionText) {
                             row[questionText] = answerText

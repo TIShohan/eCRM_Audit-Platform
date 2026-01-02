@@ -41,7 +41,8 @@ export default function QuestionForm({ question, type, onClose, onSuccess }) {
                 question_text: text,
                 question_type: type,
                 order_index: parseInt(orderIndex),
-                campaign_id: type === 'campaign' ? campaignId : null
+                campaign_id: type === 'campaign' ? campaignId : null,
+                is_active: true
             }
 
             let questionId = question?.id

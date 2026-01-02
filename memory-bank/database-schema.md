@@ -38,6 +38,7 @@ Audit evaluation criteria.
 - `question_type` (TEXT, CHECK: 'common' | 'campaign')
 - `campaign_id` (TEXT, NULLABLE)
 - `order_index` (INTEGER)
+- `is_active` (BOOLEAN, Default: true) - **Soft Delete Primary Factor**
 - `created_at` (TIMESTAMPTZ)
 
 ### 4. answer_options
@@ -55,6 +56,7 @@ The junction table storing completed audit evaluations.
 - `question_id` (UUID, FK → questions.id)
 - `answer_option_id` (UUID, FK → answer_options.id)
 - `auditor_id` (UUID, FK → user_profiles.id)
+- `question_text` (TEXT) - **Snapshot of text at time of audit**
 - `created_at` (TIMESTAMPTZ)
 
 ### 6. assignments (Legacy/Audit Trail)

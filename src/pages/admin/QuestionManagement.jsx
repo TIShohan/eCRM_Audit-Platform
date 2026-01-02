@@ -24,6 +24,7 @@ export default function QuestionManagement() {
           answer_options (*)
         `)
                 .eq('question_type', activeTab)
+                .eq('is_active', true)
                 .order('order_index', { ascending: true })
 
             if (error) throw error
@@ -39,7 +40,10 @@ export default function QuestionManagement() {
         if (!window.confirm('Are you sure you want to delete this question? This will remove all associated responses.')) return
 
         try {
-            const { error } = await supabase.from('questions').delete().eq('id', id)
+            const { error } = await supabase
+                .from('questions')
+                .update({ is_active: false })
+                .eq('id', id)
             if (error) throw error
             fetchQuestions()
         } catch (err) {

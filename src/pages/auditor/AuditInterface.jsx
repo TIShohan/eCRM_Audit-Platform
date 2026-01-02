@@ -137,6 +137,7 @@ export default function AuditInterface() {
                 .from('questions')
                 .select('*, answer_options(*)')
                 .or(`question_type.eq.common,and(question_type.eq.campaign,campaign_id.eq."${currentRecord.campaign_id}")`)
+                .eq('is_active', true)
                 .order('order_index', { ascending: true })
 
             if (qError) throw qError
@@ -172,13 +173,17 @@ export default function AuditInterface() {
             setIsTransitioning(true) // Start the smooth transition
             const currentRecordId = record.id // Guard ID
 
-            // 1. Insert/Upsert responses
-            const responseEntries = Object.entries(answers).map(([qId, oId]) => ({
-                audit_data_id: currentRecordId,
-                question_id: qId,
-                answer_option_id: oId,
-                auditor_id: user.id
-            }))
+            // 1. Insert/Upsert responses with question text snapshot
+            const responseEntries = Object.entries(answers).map(([qId, oId]) => {
+                const question = questions.find(q => q.id === qId)
+                return {
+                    audit_data_id: currentRecordId,
+                    question_id: qId,
+                    answer_option_id: oId,
+                    auditor_id: user.id,
+                    question_text: question?.question_text || '' // Snapshot current text
+                }
+            })
 
             const { error: respError } = await supabase
                 .from('audit_responses')

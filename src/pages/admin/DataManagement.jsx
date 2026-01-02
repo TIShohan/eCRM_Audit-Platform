@@ -12,6 +12,16 @@ export default function DataManagement() {
     // Modal state
     const [modal, setModal] = useState({ show: false, message: '', type: '', step: 1 })
 
+    // Upload confirmation state
+    const [uploadConfirmation, setUploadConfirmation] = useState({
+        show: false,
+        totalRecords: 0,
+        duplicates: 0,
+        newRecords: 0,
+        dateRange: '',
+        pendingRows: []
+    })
+
     const handleFileUpload = (e) => {
         const file = e.target.files[0]
         if (!file) return
@@ -39,20 +49,16 @@ export default function DataManagement() {
                             const year = parts[3];
 
                             // Rule 1: First number > 12? MUST be Day. Format is DD/MM/YYYY
-                            // Example: 20/07/2025 -> Day 20, Month 07
                             if (n1 > 12) {
                                 return `${year}-${n2.toString().padStart(2, '0')}-${n1.toString().padStart(2, '0')}`;
                             }
 
                             // Rule 2: Second number > 12? MUST be Day. Format is MM/DD/YYYY
-                            // Example: 07/20/2025 -> Month 07, Day 20
                             if (n2 > 12) {
                                 return `${year}-${n1.toString().padStart(2, '0')}-${n2.toString().padStart(2, '0')}`;
                             }
 
                             // Rule 3: Ambiguous (e.g. 05/07/2025)
-                            // User confirmed US Format (7/20/2025), so we default to MM/DD/YYYY
-                            // Example: 07/05/2025 -> Month 07, Day 05 (July 5th)
                             return `${year}-${n1.toString().padStart(2, '0')}-${n2.toString().padStart(2, '0')}`;
                         }
 
@@ -62,7 +68,7 @@ export default function DataManagement() {
                             return parsed.toISOString().split('T')[0];
                         }
 
-                        return dateStr; // Return original if unknown format
+                        return dateStr;
                     }
 
                     const rows = results.data.map(row => ({
@@ -77,7 +83,7 @@ export default function DataManagement() {
                         cluster: row['cluster'],
                         outlet_name: row['outlet'],
                         contact_id: row['Contact_id'],
-                        contact_date: standardDate(row['Contact_Date']), // CHANGED: Apply normalization
+                        contact_date: standardDate(row['Contact_Date']),
                         location: row['Contact_Location'],
                         audio_link: row['audio_links'],
                         start_time: row['Contact_Start_Time'],
@@ -92,21 +98,47 @@ export default function DataManagement() {
                         throw new Error('No valid records found in CSV. Please check headers.')
                     }
 
-                    const { error: insertError } = await supabase
+                    // Check for duplicates
+                    const contactIds = rows.map(r => r.contact_id)
+                    const { data: existing, error: checkError } = await supabase
                         .from('audit_data')
-                        .insert(rows)
+                        .select('contact_id')
+                        .in('contact_id', contactIds)
 
-                    if (insertError) throw insertError
+                    if (checkError) throw checkError
 
-                    setResults({
-                        total: results.data.length,
-                        valid: rows.length,
-                        message: `Successfully uploaded ${rows.length} records with full metadata!`
-                    })
+                    const existingIds = new Set(existing.map(e => e.contact_id))
+                    const newRows = rows.filter(r => !existingIds.has(r.contact_id))
+                    const duplicateCount = rows.length - newRows.length
+
+                    // Get date range from file
+                    const dates = rows.map(r => r.contact_date).filter(Boolean).sort()
+                    const dateRange = dates.length > 0
+                        ? dates[0] === dates[dates.length - 1]
+                            ? dates[0]
+                            : `${dates[0]} to ${dates[dates.length - 1]}`
+                        : 'Unknown'
+
+                    // If duplicates found, show confirmation
+                    if (duplicateCount > 0) {
+                        setUploadConfirmation({
+                            show: true,
+                            totalRecords: rows.length,
+                            duplicates: duplicateCount,
+                            newRecords: newRows.length,
+                            dateRange,
+                            pendingRows: newRows
+                        })
+                        setUploading(false)
+                        return
+                    }
+
+                    // No duplicates, proceed directly
+                    await insertRecords(newRows)
+
                 } catch (err) {
                     console.error('Upload error:', err)
                     setError(err.message)
-                } finally {
                     setUploading(false)
                 }
             },
@@ -115,6 +147,39 @@ export default function DataManagement() {
                 setUploading(false)
             }
         })
+    }
+
+    const insertRecords = async (rows) => {
+        try {
+            setUploading(true)
+            const { error: insertError } = await supabase
+                .from('audit_data')
+                .insert(rows)
+
+            if (insertError) throw insertError
+
+            setResults({
+                total: rows.length,
+                valid: rows.length,
+                message: `Successfully uploaded ${rows.length} new records!`
+            })
+            setUploadConfirmation({ show: false, totalRecords: 0, duplicates: 0, newRecords: 0, dateRange: '', pendingRows: [] })
+        } catch (err) {
+            console.error('Insert error:', err)
+            setError(err.message)
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const handleConfirmUpload = () => {
+        insertRecords(uploadConfirmation.pendingRows)
+    }
+
+    const handleCancelUpload = () => {
+        setUploadConfirmation({ show: false, totalRecords: 0, duplicates: 0, newRecords: 0, dateRange: '', pendingRows: [] })
+        setUploading(false)
+        setError(null)
     }
 
     const startCleanup = (type) => {
@@ -311,6 +376,81 @@ export default function DataManagement() {
                         </button>
                     </div>
                 </div>
+
+                {/* Duplicate Upload Confirmation Modal */}
+                {uploadConfirmation.show && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                    }}>
+                        <div style={{
+                            background: 'white',
+                            padding: '30px',
+                            borderRadius: '12px',
+                            maxWidth: '500px',
+                            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+                        }}>
+                            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#c53030', marginBottom: '15px' }}>
+                                ⚠️ Duplicate Records Detected
+                            </h3>
+                            <div style={{ marginBottom: '20px', color: '#4a5568', lineHeight: '1.6' }}>
+                                <p style={{ marginBottom: '10px' }}>
+                                    <strong>File Date Range:</strong> {uploadConfirmation.dateRange}
+                                </p>
+                                <p style={{ marginBottom: '10px' }}>
+                                    <strong>Total Records in File:</strong> {uploadConfirmation.totalRecords}
+                                </p>
+                                <p style={{ marginBottom: '10px', color: '#c53030' }}>
+                                    <strong>Already Exist:</strong> {uploadConfirmation.duplicates}
+                                </p>
+                                <p style={{ marginBottom: '10px', color: '#2f855a' }}>
+                                    <strong>New Records to Insert:</strong> {uploadConfirmation.newRecords}
+                                </p>
+                            </div>
+                            <p style={{ marginBottom: '20px', fontSize: '14px', color: '#718096' }}>
+                                You have already uploaded some of these records. Only unique data will be inserted. Do you want to continue?
+                            </p>
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                <button
+                                    onClick={handleCancelUpload}
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: 'white',
+                                        color: '#4a5568',
+                                        border: '1px solid #cbd5e0',
+                                        borderRadius: '6px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmUpload}
+                                    style={{
+                                        padding: '10px 20px',
+                                        background: '#4f46e5',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Yes, Upload {uploadConfirmation.newRecords} New Records
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <ConfirmationModal
                     isVisible={modal.show}

@@ -64,6 +64,27 @@ Admin Reporting → Reliable CSV Export (Canonical Questions + Legacy Handling)
   2. Scramble `email` (`deleted_<timestamp>_...`) to release the unique constraint.
   3. Anonymize `full_name` (`[DELETED] ...`).
 - **UI Filtering**: Admin lists (`UserManagement`, `Dashboard`) automatically filter out emails starting with `deleted_`.
+- **Self-Protection**: Admins cannot toggle their own `is_active` status to prevent accidental lockout.
+
+### 8. Duplicate Upload Prevention Pattern
+**Data Quality Assurance**
+- **Problem**: Admins may accidentally upload the same CSV file multiple times, creating duplicate audit records.
+- **Solution**: Pre-upload duplicate detection with confirmation workflow:
+  1. Parse CSV and extract all `contact_id` values.
+  2. Query database to check which `contact_id`s already exist.
+  3. If duplicates found, show warning modal with:
+     - File date range
+     - Total records in file
+     - Count of existing duplicates
+     - Count of new records to insert
+  4. Admin chooses: Cancel or Proceed with only new records.
+- **Benefits**: Prevents duplicate audits, allows safe re-uploads of mixed data, maintains data integrity.
+
+### 9. Question Management Lifecycle Pattern
+**Data Integrity & Versioning**
+- **Soft Delete**: To avoid breaking foreign key constraints in `audit_responses`, questions are never hard-deleted. Instead, an `is_active` flag is set to `false`, hiding them from the Auditor UI and Admin management list while preserving historical data.
+- **Snapshot Revisioning**: To prevent audit history from changing when an admin edits a question's text, a snapshot of the `question_text` is saved directly into the `audit_responses` table at the moment of submission.
+- **Reporting Hierarchy**: Reports prioritize the snapshotted `question_text` from the response, falling back to the live `questions` table for legacy data. This ensures that even if a question is renamed or deleted, the original data remains accurate.
 
 ## Component Architecture
 

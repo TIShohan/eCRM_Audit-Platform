@@ -5,6 +5,7 @@
 The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
+- **Duplicate Prevention**: CSV uploads now check for existing `contact_id` records. If duplicates found, admin sees warning modal with stats (total/duplicates/new) and can choose to proceed with only new records or cancel.
 - **User Management**: Implemented "Soft Delete" for auditors (Anonymize + Deactivate) to preserve audit history. Updated Admin Dashboards to filter out deleted users. Added self-protection: admins cannot deactivate themselves.
 - **Data Ingestion Standard**: Implemented strict date standardization during upload (`standardDate` helper) to normalize mixed CSV formats (UD/Intl) to `YYYY-MM-DD`.
 - **Report Reliability**: Rewrote CSV key generation to scan all questions, preventing data loss. Added `Campaign_ID`, legacy question handling, and strictly ordered by `Completed_At`.
