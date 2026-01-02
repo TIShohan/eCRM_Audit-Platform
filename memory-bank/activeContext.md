@@ -5,6 +5,7 @@
 The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
+- **User Management**: Implemented "Soft Delete" for auditors (Anonymize + Deactivate) to preserve audit history. Updated Admin Dashboards to filter out deleted users.
 - **Data Ingestion Standard**: Implemented strict date standardization during upload (`standardDate` helper) to normalize mixed CSV formats (UD/Intl) to `YYYY-MM-DD`.
 - **Report Reliability**: Rewrote CSV key generation to scan all questions, preventing data loss. Added `Campaign_ID`, legacy question handling, and strictly ordered by `Completed_At`.
 - **Admin UX**: Added "Quick Select: Whole Month" to Reports page for one-click exports.

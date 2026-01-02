@@ -15,7 +15,7 @@ Extends `auth.users` with application-specific metadata.
 - `mobile_number` (TEXT)
 - `role` (TEXT, CHECK: 'admin' | 'auditor')
 - `daily_limit` (INTEGER, Default: 50)
-- `is_active` (BOOLEAN, Default: true)
+- `is_active` (BOOLEAN, Default: true) - **Primary Mechanism for Soft Delete** (false = locked/anonymized)
 - `created_at` (TIMESTAMPTZ)
 
 ### 2. audit_data

@@ -19,6 +19,7 @@ export default function UserManagement() {
             const { data: profiles, error: profileError } = await supabase
                 .from('user_profiles')
                 .select('id, email, full_name, mobile_number, role, daily_limit, is_active, created_at')
+                .not('email', 'like', 'deleted_%') // HIDE SOFT DELETED USERS
                 .order('created_at', { ascending: false })
 
             if (profileError) throw profileError

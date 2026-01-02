@@ -40,11 +40,14 @@
 - **Role-Based Access**: Forced at both the UI level (React Router) and the Database level (RLS).
 - **Isolation**: Auditors cannot see responses or specific details of audits assigned to others.
 - **Audit Trail**: Every response is linked to a unique `auditor_id` and `audit_data_id` with timestamps.
+- **User Soft Deletion**: Users are deactivated (`is_active: false`) and anonymized rather than deleted to preserve foreign key integrity in audit trails.
 
-### Performance Optimizations
+### Performance & Data Integrity
 - **Aggregated Views**: The `daily_inventory_summary` view prevents expensive `COUNT(*)` operations on the raw table during dashboard renders.
 - **Batch Insertion**: Admin imports use Supabase's batch insert capability for efficiency.
 - **Lazy Loading**: Map markers and audio assets are loaded on-demand.
+- **Date Standardization**: All date fields are normalized to `YYYY-MM-DD` at ingestion to ensure reliable filtering.
+- **Report Reliability**: CSV exports use dynamic header scanning to capture all questions, including legacy ones, preventing data loss.
 
 ## Data Schema & Relationships
 

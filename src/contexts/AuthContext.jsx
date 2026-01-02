@@ -76,15 +76,35 @@ export const AuthProvider = ({ children }) => {
 
     const signUp = async (email, password, role = 'auditor', dailyLimit = 50, fullName = '', mobileNumber = '') => {
         try {
-            // Sign up user
-            const { data: authData, error: authError } = await supabase.auth.signUp({
+            // 1. Create a temporary client to sign up the NEW user without logging out the CURRENT user (Admin)
+            // We disable session persistence so this client doesn't overwrite localStorage
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+            const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+            const { createClient } = await import('@supabase/supabase-js')
+
+            const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+                auth: {
+                    persistSession: false,
+                    autoRefreshToken: false,
+                    detectSessionInUrl: false
+                }
+            })
+
+            // 2. Sign up the new user using the temp client
+            const { data: authData, error: authError } = await tempClient.auth.signUp({
                 email,
                 password,
             })
             if (authError) throw authError
 
-            // Profile will be auto-created by trigger, but we can update role/limit if needed
+            // 3. Update the profile using the ADMIN'S existing session (GLOBAL client)
+            // The temp client might be logged in as the new user (auditor), who can't set their own role.
+            // But 'supabase' (global) is logged in as Admin, so it CAN update the profile.
             if (authData.user) {
+                // Wait a moment for the trigger to create the profile row if necessary, 
+                // though usually we can UPDATE immediately if the row exists or UPSERT.
+                // We'll trust the trigger created it, or we can use upsert to be safe.
+
                 const { error: profileError } = await supabase
                     .from('user_profiles')
                     .update({
@@ -117,6 +137,45 @@ export const AuthProvider = ({ children }) => {
         }
     }
 
+    const deleteUser = async (userId) => {
+        try {
+            // SOFT DELETE STRATEGY
+            // We cannot hard delete because of foreign key constraints (Completed Audits).
+            // Instead, we will:
+            // 1. Mark as inactive (locks access)
+            // 2. Anonymize the name (visual delete)
+            // 3. Scramble the email (frees up the email for re-use if needed, and prevents login matching)
+
+            // 1. Get current details to append [DELETED]
+            const { data: current, error: fetchError } = await supabase
+                .from('user_profiles')
+                .select('full_name, email')
+                .eq('id', userId)
+                .single()
+
+            if (fetchError) throw fetchError
+
+            // 2. Perform Soft Delete Update
+            const timestamp = new Date().getTime()
+            const { error } = await supabase
+                .from('user_profiles')
+                .update({
+                    is_active: false,
+                    full_name: `[DELETED] ${current.full_name}`,
+                    email: `deleted_${timestamp}_${current.email}`,
+                    mobile_number: null // Remove personal info
+                })
+                .eq('id', userId)
+
+            if (error) throw error
+
+            return { error: null }
+        } catch (error) {
+            console.error('Error deleting user:', error)
+            return { error }
+        }
+    }
+
     const value = {
         user,
         profile,
@@ -124,6 +183,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut,
+        deleteUser, // EXPORT
         isAdmin: profile?.role === 'admin',
         isAuditor: profile?.role === 'auditor',
         isActive: profile?.is_active !== false,

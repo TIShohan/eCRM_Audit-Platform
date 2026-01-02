@@ -56,6 +56,15 @@ Admin Reporting → Reliable CSV Export (Canonical Questions + Legacy Handling)
 - **State Propagation**: Theme state is persisted in `localStorage` and passed to child components via React Router's `Outlet` context, allowing dynamic adaptation of cards, maps, and forms.
 - **Global Injection**: The theme class is injected directly into `document.body` to ensure 100% screen coverage without browser margin artifacts.
 
+### 7. User Soft Delete Pattern
+**Data Integrity Preservation**
+- **Problem**: Deleting users breaks foreign key constraints on `audit_responses`.
+- **Solution**: "Delete" actions perform a Soft Delete:
+  1. Set `is_active` to `false` (immediate lockout).
+  2. Scramble `email` (`deleted_<timestamp>_...`) to release the unique constraint.
+  3. Anonymize `full_name` (`[DELETED] ...`).
+- **UI Filtering**: Admin lists (`UserManagement`, `Dashboard`) automatically filter out emails starting with `deleted_`.
+
 ## Component Architecture
 
 ### Core Modules

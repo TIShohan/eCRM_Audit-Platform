@@ -26,7 +26,7 @@ export default function Dashboard() {
                 supabase.from('audit_data').select('*', { count: 'exact', head: true }).eq('is_archived', false),
                 supabase.from('audit_data').select('*', { count: 'exact', head: true }).eq('status', 'completed').eq('is_archived', false),
                 supabase.from('audit_data').select('*', { count: 'exact', head: true }).eq('status', 'pending').eq('is_archived', false),
-                supabase.from('user_profiles').select('*').eq('role', 'auditor')
+                supabase.from('user_profiles').select('*').eq('role', 'auditor').not('email', 'like', 'deleted_%') // Exclude soft-deleted
             ])
 
             // 2. Fetch Daily Completion Counts for each auditor

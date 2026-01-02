@@ -11,9 +11,28 @@ export default function UserForm({ user, onClose, onSuccess }) {
     const [dailyLimit, setDailyLimit] = useState(user?.daily_limit || 50)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
-    const { signUp } = useAuth()
+    const { signUp, deleteUser } = useAuth()
     const isEditing = !!user
+
+    const handleDelete = async () => {
+        if (!confirmDelete) {
+            setConfirmDelete(true)
+            return
+        }
+
+        try {
+            setLoading(true)
+            const { error } = await deleteUser(user.id)
+            if (error) throw error
+            onSuccess()
+        } catch (err) {
+            setError(err.message)
+            setLoading(false)
+            setConfirmDelete(false)
+        }
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -153,6 +172,27 @@ export default function UserForm({ user, onClose, onSuccess }) {
                     )}
 
                     <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
+                        {isEditing && (
+                            <button
+                                type="button"
+                                onClick={handleDelete}
+                                className="interactive-btn"
+                                style={{
+                                    padding: '12px',
+                                    background: confirmDelete ? '#b91c1c' : '#fee2e2',
+                                    color: confirmDelete ? 'white' : '#991b1b',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontWeight: '800',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    marginRight: 'auto', // Pushes other buttons to right
+                                    minWidth: '100px'
+                                }}
+                            >
+                                {confirmDelete ? 'Confirm! 🗑️' : 'Delete'}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={onClose}
