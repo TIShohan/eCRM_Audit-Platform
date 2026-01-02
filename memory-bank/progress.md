@@ -18,9 +18,10 @@ The foundation tool for single-user CSV auditing is fully operational.
 - **Phase 11: High-Scale Optimization**: Fully implemented the "Global Queue" pull model, removing manual assignment bottlenecks.
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
 ### Recent Maintenance (Reliability & UX)
-- **User Management**: Added Soft Delete (Anonymize & Deactivate) + Filtered Views to remove clutter while saving data.
+- **User Management**: Added Soft Delete (Anonymize & Deactivate) + Filtered Views to remove clutter while saving data. Added admin self-protection to prevent accidental lockout.
 - **Report Reliability**: Fixed CSV export bug (missing columns), added Legacy Question support, and `Campaign_ID`.
 - **Data Ingestion**: Standardized all CSV uploads to `YYYY-MM-DD` to prevent date reporting errors.
 - **Reporting UX**: Added "Quick Select Month" and forced chronological sorting by `Completed_At`.
+- **NPM Scripts**: Added `npm start` command for deployment compatibility.
 
-**Resume Command for Next Agent**: "Project is 100% Production Ready. User Management is robust (Soft Delete). Reports are reliable. Review @activeContext.md for system status."
+**Resume Command for Next Agent**: "Project is 100% Production Ready. User Management is robust (Soft Delete + Admin Protection). Reports are reliable. Review @activeContext.md for system status."

@@ -5,7 +5,7 @@
 The platform is currently in maintenance mode with all core v2.0 features implemented, including the Self-Service "Pull" model and industrial-scale inventory management.
 
 ## Recent Changes
-- **User Management**: Implemented "Soft Delete" for auditors (Anonymize + Deactivate) to preserve audit history. Updated Admin Dashboards to filter out deleted users.
+- **User Management**: Implemented "Soft Delete" for auditors (Anonymize + Deactivate) to preserve audit history. Updated Admin Dashboards to filter out deleted users. Added self-protection: admins cannot deactivate themselves.
 - **Data Ingestion Standard**: Implemented strict date standardization during upload (`standardDate` helper) to normalize mixed CSV formats (UD/Intl) to `YYYY-MM-DD`.
 - **Report Reliability**: Rewrote CSV key generation to scan all questions, preventing data loss. Added `Campaign_ID`, legacy question handling, and strictly ordered by `Completed_At`.
 - **Admin UX**: Added "Quick Select: Whole Month" to Reports page for one-click exports.
@@ -15,6 +15,7 @@ The platform is currently in maintenance mode with all core v2.0 features implem
 - **Phase 11: High-Scale Optimization**: Fully implemented the "Global Queue" pull model, removing manual assignment bottlenecks.
 - **Admin Dashboard**: Transitioned from record-level view to a Daily Inventory Summary aggregated view for better performance with large datasets.
 - **Soft-Delete Archiving**: Added `is_archived` flag to `audit_data` to hide completed records from active dashboards.
+- **NPM Scripts**: Added `npm start` alias for `npm run dev` for standard deployment compatibility.
 
 ## Current Objectives
 - [x] All core v2.0 phases completed.

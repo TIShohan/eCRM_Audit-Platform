@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import UserForm from '../../components/admin/UserForm'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 
 export default function UserManagement() {
+    const { user: currentUser } = useAuth()
     const [users, setUsers] = useState([])
     const [loading, setLoading] = useState(true)
     const [isFormOpen, setIsFormOpen] = useState(false)
@@ -174,21 +176,27 @@ export default function UserManagement() {
                                     <td style={{ ...tdStyle, fontWeight: '700' }}>{user.daily_limit}</td>
                                     <td style={tdStyle}>
                                         <button
-                                            onClick={() => handleToggleStatus(user)}
+                                            onClick={() => {
+                                                if (user.id === currentUser?.id) return;
+                                                handleToggleStatus(user)
+                                            }}
+                                            disabled={user.id === currentUser?.id}
                                             style={{
                                                 padding: '4px 12px',
                                                 borderRadius: '20px',
                                                 fontSize: '10px',
                                                 fontWeight: '900',
                                                 textTransform: 'uppercase',
-                                                cursor: 'pointer',
+                                                cursor: user.id === currentUser?.id ? 'not-allowed' : 'pointer',
                                                 border: '1px solid',
                                                 background: user.is_active !== false ? '#ecfdf5' : '#fef2f2',
                                                 color: user.is_active !== false ? '#10b981' : '#ef4444',
                                                 borderColor: user.is_active !== false ? '#10b981' : '#ef4444',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                opacity: user.id === currentUser?.id ? 0.6 : 1
                                             }}
                                             className="interactive-btn"
+                                            title={user.id === currentUser?.id ? "You cannot deactivate yourself" : "Toggle Status"}
                                         >
                                             {user.is_active !== false ? '● Active' : '○ Inactive'}
                                         </button>
